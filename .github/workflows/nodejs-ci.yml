@@ -9,6 +9,7 @@ on:
       - master
       - next
       - v4
+      - 'ci/**'
   pull_request:
     branches:
       - master
@@ -21,11 +22,20 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    continue-on-error: true
+
     strategy:
+      max-parallel: 1
       matrix:
-        browser: [ChromeCi, Firefox]
+        browser: ['bs_win_ie11', 'bs_win_edge', 'bs_mac_chrome', 'bs_mac_firefox', 'bs_mac_safari']
 
     steps:
+      - name: 'BrowserStack Env Setup' # Invokes the setup-env action
+        uses: browserstack/github-actions/setup-env@master
+        with:
+          username: ${{ secrets.BS_USERNAME }}
+          access-key: ${{ secrets.BS_ACCESS_KEY }}
+
       - uses: actions/checkout@v2
 
       - name: Setup kernel, increase watchers
@@ -46,7 +56,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Run headless tests
-        run: xvfb-run --auto-servernum npm test
+        run: npm test
         env:
           CI: true
-          BROWSER: ${{ matrix.browser }}
+          KARMA_BROWSER: ${{ matrix.browser }}

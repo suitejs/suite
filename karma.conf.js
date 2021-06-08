@@ -8,6 +8,7 @@
 
 const path = require('path');
 const webpack = require('webpack');
+const package = require('./package.json');
 
 const webpackConfig = {
   output: {
@@ -70,22 +71,11 @@ module.exports = config => {
   }
 
   config.set({
-    /** Timeout for capturing a browser (in ms). */
-    captureTimeout: 210000,
-
-    /** maximum number of tries a browser will attempt in the case of a disconnection (in ms) */
-    browserDisconnectTolerance: 3,
-
-    /** How long does Karma wait for a browser to reconnect (in ms). */
-    browserDisconnectTimeout: 210000,
-
-    /** How long will Karma wait for a message from a browser before disconnecting from it (in ms). */
-    browserNoActivityTimeout: 210000,
     basePath: '',
     files: [testFile],
     frameworks: ['mocha', 'sinon-chai'],
     colors: true,
-    reporters: ['mocha', 'coverage'],
+    reporters: ['mocha', 'coverage', 'BrowserStack'],
     logLevel: config.LOG_INFO,
     preprocessors: {
       'test/*.js': ['webpack'],
@@ -95,19 +85,62 @@ module.exports = config => {
     webpackMiddleware: {
       noInfo: true
     },
-    browsers: env.BROWSER ? env.BROWSER.split(',') : ['Chrome'],
+    browserStack: {
+      project: process.env.BROWSERSTACK_PROJECT_NAME || package.name,
+      build: process.env.BROWSERSTACK_BUILD_NAME,
+      // use '0' instead of 0 because 0 doesn't work
+      // @see https://github.com/karma-runner/karma-browserstack-launcher/issues/179
+      retryLimit: '0',
+      timeout: 600 // 10min
+    },
     customLaunchers: {
-      ChromeCi: {
-        base: 'Chrome',
-        flags: ['--no-sandbox']
+      bs_win_ie11: {
+        base: 'BrowserStack',
+        os: 'Windows',
+        os_version: '10',
+        browser: 'IE',
+        browser_version: '11.0',
+        resolution: '1366x768'
       },
-      FirefoxAutoAllowGUM: {
-        base: 'Firefox',
-        prefs: {
-          'media.navigator.permission.disabled': true
-        }
+
+      bs_win_edge: {
+        base: 'BrowserStack',
+        os: 'Windows',
+        os_version: '10',
+        browser: 'Edge',
+        browser_version: 'latest',
+        resolution: '1366x768'
+      },
+
+      bs_mac_chrome: {
+        base: 'BrowserStack',
+        os: 'OS X',
+        os_version: 'Big Sur',
+        browser: 'Chrome',
+        browser_version: 'latest'
+      },
+      bs_mac_firefox: {
+        base: 'BrowserStack',
+        os: 'OS X',
+        os_version: 'Big Sur',
+        browser: 'Firefox',
+        browser_version: 'latest'
+      },
+      bs_mac_safari: {
+        base: 'BrowserStack',
+        os: 'OS X',
+        os_version: 'Big Sur',
+        browser: 'Safari',
+        browser_version: '14.0'
       }
     },
+    browsers: [process.env.KARMA_BROWSER || 'bs_mac_safari'],
+    // @see https://github.com/browserstack/karma-browserstack-example/blob/master/karma.conf.js
+    captureTimeout: 3e5,
+    browserDisconnectTolerance: 0,
+    browserDisconnectTimeout: 3e5,
+    browserSocketTimeout: 1.2e5,
+    browserNoActivityTimeout: 3e5,
     coverageReporter: {
       dir: 'coverage',
       reporters: [
