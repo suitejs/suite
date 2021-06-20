@@ -477,4 +477,27 @@ describe('TreePicker', () => {
     assert.equal(list.length, 1);
     assert.ok(list[0].innerText, 'Louisa');
   });
+
+  it('Should only clean the searchKeyword', () => {
+    const instance = getInstance(
+      <TreePicker defaultOpen defaultExpandAll data={data} defaultValue={'Master'} />
+    );
+
+    const searchBar = instance.overlay.querySelector('.rs-picker-search-bar-input');
+    ReactTestUtils.Simulate.change(searchBar, {
+      target: { value: 'Master' }
+    });
+
+    searchBar.focus();
+    ReactTestUtils.Simulate.keyDown(searchBar, {
+      key: KEY_VALUES.BACKSPACE
+    });
+    assert.equal(instance.root.querySelector('.rs-picker-toggle-value').innerText, 'Master');
+
+    ReactTestUtils.Simulate.keyDown(instance.overlay, {
+      key: KEY_VALUES.BACKSPACE
+    });
+
+    assert.ok(!instance.root.querySelector('.rs-picker-toggle-value .rs-picker-value-item'));
+  });
 });

@@ -620,6 +620,11 @@ const TreePicker: PickerComponent<TreePickerProps> = React.forwardRef((props, re
 
   const handleClean = useCallback(
     (event: React.SyntheticEvent<any>) => {
+      const target = event.target as Element;
+      // exclude searchBar
+      if (target.matches('div[role="searchbox"] > input')) {
+        return;
+      }
       setValue(null);
       onChange?.(null, event);
     },

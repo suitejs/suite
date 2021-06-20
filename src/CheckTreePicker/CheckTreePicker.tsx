@@ -512,6 +512,12 @@ const CheckTreePicker: PickerComponent<CheckTreePickerProps> = React.forwardRef(
 
   const handleClean = useCallback(
     (event: React.SyntheticEvent<any>) => {
+      const target = event.target as Element;
+      // exclude searchBar
+      if (target.matches('div[role="searchbox"] > input')) {
+        return;
+      }
+
       setActiveNode(null);
       setValue([]);
       setFocusItemValue(null);
