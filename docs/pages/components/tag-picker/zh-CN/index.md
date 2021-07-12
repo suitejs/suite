@@ -59,7 +59,7 @@
 | classPrefix        | string `('picker')`                                                     | 组件 CSS 类的前缀                          |
 | cleanable          | boolean `(true)`                                                        | 可以清除                                   |
 | container          | HTMLElement &#124; (() => HTMLElement)                                  | 设置渲染的容器                             |
-| creatable          | boolean `(true)`                                                        | 设置可以新建选项                           |
+| creatable          | boolean                                                                 | 设置可以新建选项                           |
 | data \*            | DataItemType[]                                                          | 组件数据                                   |
 | defaultValue       | string[]                                                                | 设置默认值 `非受控`                        |
 | disabled           | boolean                                                                 | 禁用组件                                   |

@@ -57,7 +57,7 @@ Learn more in [Accessibility](/guide/accessibility).
 | classPrefix        | string `('picker')`                                                    | The prefix of the component CSS class                       |
 | cleanable          | boolean `(true)`                                                       | Whether the selected value can be cleared                   |
 | container          | HTMLElement &#124; (() => HTMLElement)                                 | Sets the rendering container                                |
-| creatable          | boolean `(true)`                                                       | Settings can create new options                             |
+| creatable          | boolean                                                                | Settings can create new options                             |
 | data \*            | DataItemType[]                                                         | The data of component                                       |
 | defaultValue       | string[]                                                               | Default values of the selected items                        |
 | disabled           | boolean                                                                | Whether disabled componet                                   |
