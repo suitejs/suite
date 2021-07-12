@@ -69,6 +69,7 @@ class Cascader extends React.Component<CascaderProps, CascaderState> {
     }
   };
 
+  toggleRef: React.RefObject<any>;
   triggerRef: React.RefObject<any>;
   containerRef: React.RefObject<any>;
   positionRef: React.RefObject<any>;
@@ -104,6 +105,7 @@ class Cascader extends React.Component<CascaderProps, CascaderState> {
     this.triggerRef = React.createRef();
     this.containerRef = React.createRef();
     this.positionRef = React.createRef();
+    this.toggleRef = React.createRef();
 
     // for test
     this.menuContainerRef = React.createRef();
@@ -397,6 +399,14 @@ class Cascader extends React.Component<CascaderProps, CascaderState> {
     return items;
   }
 
+  getPositionInstance = () => {
+    return this.positionRef.current;
+  };
+
+  getToggleInstance = () => {
+    return this.toggleRef.current;
+  };
+
   renderSearchResultPanel() {
     const { locale } = this.props;
     const { searchKeyword } = this.state;
@@ -439,7 +449,12 @@ class Cascader extends React.Component<CascaderProps, CascaderState> {
     );
 
     return (
-      <MenuWrapper className={classes} style={menuStyle}>
+      <MenuWrapper
+        className={classes}
+        style={menuStyle}
+        getToggleInstance={this.getToggleInstance}
+        getPositionInstance={this.getPositionInstance}
+      >
         {searchable && (
           <SearchBar
             placeholder={locale.searchPlaceholder}
@@ -538,6 +553,7 @@ class Cascader extends React.Component<CascaderProps, CascaderState> {
           >
             <PickerToggle
               {...unhandled}
+              ref={this.toggleRef}
               componentClass={toggleComponentClass}
               onClean={createChainedFunction(this.handleClean, onClean)}
               cleanable={cleanable && !disabled}

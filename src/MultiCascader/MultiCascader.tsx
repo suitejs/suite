@@ -80,6 +80,8 @@ class MultiCascader extends React.Component<MultiCascaderProps, MultiCascaderSta
   menuContainerRef: React.RefObject<any>;
   positionRef: React.RefObject<any>;
   triggerRef: React.RefObject<any>;
+  toggleRef: React.RefObject<any>;
+
   constructor(props) {
     super(props);
 
@@ -115,6 +117,7 @@ class MultiCascader extends React.Component<MultiCascaderProps, MultiCascaderSta
     this.menuContainerRef = React.createRef();
     this.positionRef = React.createRef();
     this.triggerRef = React.createRef();
+    this.toggleRef = React.createRef();
   }
 
   static getCascadeState(nextProps: MultiCascaderProps, flattenData: any[], nextValue?: any[]) {
@@ -321,6 +324,13 @@ class MultiCascader extends React.Component<MultiCascaderProps, MultiCascaderSta
     }
     return items;
   }
+  getPositionInstance = () => {
+    return this.positionRef.current;
+  };
+
+  getToggleInstance = () => {
+    return this.toggleRef.current;
+  };
 
   renderSearchRow = (item: any, key: number) => {
     const { labelKey, valueKey, cascade, disabledItemValues = [] } = this.props;
@@ -422,7 +432,12 @@ class MultiCascader extends React.Component<MultiCascaderProps, MultiCascaderSta
     const menuProps = _.pick(this.props, Object.keys(dropdownMenuPropTypes));
 
     return (
-      <MenuWrapper className={classes} style={menuStyle}>
+      <MenuWrapper
+        className={classes}
+        style={menuStyle}
+        getToggleInstance={this.getToggleInstance}
+        getPositionInstance={this.getPositionInstance}
+      >
         {searchable && (
           <SearchBar
             placeholder={locale.searchPlaceholder}
@@ -533,6 +548,7 @@ class MultiCascader extends React.Component<MultiCascaderProps, MultiCascaderSta
         >
           <PickerToggle
             {...unhandled}
+            ref={this.toggleRef}
             componentClass={toggleComponentClass}
             onClean={createChainedFunction(this.handleClean, onClean)}
             cleanable={cleanable && !disabled}
