@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 
 import Ripple from '../Ripple';
@@ -7,13 +7,13 @@ import { useClassNames } from '../utils';
 import { IconProps } from '@rsuite/icons/lib/Icon';
 import { WithAsProps, RsRefForwardingComponent, TypeAttributes } from '../@types/common';
 import useToggleCaret from '../utils/useToggleCaret';
+import { SidenavContext } from '../Sidenav/Sidenav';
 
 export interface DropdownToggleProps extends WithAsProps {
   icon?: React.ReactElement<IconProps>;
   noCaret?: boolean;
   renderTitle?: (children?: React.ReactNode) => React.ReactNode;
   placement?: TypeAttributes.Placement8;
-  inSidenav?: boolean;
 }
 
 const defaultProps: Partial<DropdownToggleProps> = {
@@ -34,16 +34,20 @@ const DropdownToggle: RsRefForwardingComponent<
     icon,
     noCaret,
     placement,
-    inSidenav,
     ...rest
   } = props;
+
+  const sidenav = useContext(SidenavContext);
   const { prefix, withClassPrefix, merge } = useClassNames(classPrefix);
   const classes = merge(
     className,
     withClassPrefix({
-      'custom-title': typeof renderTitle === 'function'
+      'custom-title': typeof renderTitle === 'function',
+      'no-caret': noCaret
     })
   );
+
+  const inSidenav = !!sidenav;
 
   // Caret icon is down by default, when Dropdown is used in Sidenav.
   const Caret = useToggleCaret(inSidenav ? 'bottomStart' : placement);

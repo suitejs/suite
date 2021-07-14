@@ -50,7 +50,7 @@ export interface SidenavComponent extends RsRefForwardingComponent<'div', Sidena
 }
 
 const defaultProps: Partial<SidenavProps> = {
-  as: 'div',
+  as: 'nav',
   classPrefix: 'sidenav',
   appearance: 'default',
   expanded: true
@@ -97,7 +97,7 @@ const Sidenav: SidenavComponent = (React.forwardRef((props: SidenavProps, ref) =
       expanded,
       activeKey,
       sidenav: true,
-      openKeys,
+      openKeys: openKeys ?? [],
       onOpenChange: handleOpenChange,
       onSelect
     }),

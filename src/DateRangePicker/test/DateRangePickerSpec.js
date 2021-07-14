@@ -13,7 +13,7 @@ import {
 import { getDOMNode, getInstance } from '@test/testUtils';
 
 import DateRangePicker from '../DateRangePicker';
-import { zonedDate } from '../../utils/timeZone';
+import { zonedDate, format as zonedFormat, toTimeZone } from '../../utils/timeZone';
 import { setTimingMargin } from '../utils';
 
 describe('DateRangePicker', () => {
@@ -276,6 +276,9 @@ describe('DateRangePicker', () => {
       '.rs-calendar-table-cell-disabled .rs-calendar-table-cell-content'
     );
 
-    assert.equal(firstDisabledCell.getAttribute('title'), format(tomorrow, 'dd MMM yyyy'));
+    assert.equal(
+      firstDisabledCell.getAttribute('title'),
+      zonedFormat(toTimeZone(tomorrow, timeZone), 'dd MMM yyyy', timeZone)
+    );
   });
 });

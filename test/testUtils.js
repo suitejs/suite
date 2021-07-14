@@ -1,8 +1,8 @@
 /* eslint-disable react/no-find-dom-node */
 
 import React from 'react';
-import { findDOMNode } from 'react-dom';
-import ReactTestUtils from 'react-dom/test-utils';
+import ReactDOM, { findDOMNode, unmountComponentAtNode } from 'react-dom';
+import * as ReactTestUtils from 'react-dom/test-utils';
 import getPalette from './getPalette';
 import tinycolor from 'tinycolor2';
 export { getStyle } from 'dom-lib';
@@ -25,8 +25,37 @@ function isDOMElement(node) {
   );
 }
 
-export function renderIntoDocument(children) {
-  return ReactTestUtils.renderIntoDocument(children);
+// Record every container created for rendering
+// Useful for doing a cleanup after each test case
+// Ref: https://github.com/testing-library/react-testing-library/blob/main/src/pure.js
+const mountedContainers = new Set();
+
+export function render(children) {
+  const container = createTestContainer();
+
+  ReactDOM.render(children, container);
+
+  return container;
+}
+
+export function cleanup() {
+  mountedContainers.forEach(cleanupAtContainer);
+}
+
+afterEach(() => {
+  cleanup();
+});
+
+// maybe one day we'll expose this (perhaps even as a utility returned by render).
+// but let's wait until someone asks for it.
+function cleanupAtContainer(container) {
+  ReactTestUtils.act(() => {
+    unmountComponentAtNode(container);
+  });
+  if (container.parentNode === document.body) {
+    document.body.removeChild(container);
+  }
+  mountedContainers.delete(container);
 }
 
 export function getInstance(children, waitForDidMount = true) {
@@ -41,16 +70,17 @@ export function getInstance(children, waitForDidMount = true) {
         /**
          * https://stackoverflow.com/questions/36682241/testing-functional-components-with-renderintodocument
          */
-        ReactTestUtils.renderIntoDocument(React.cloneElement(children, { ref: instanceRef }));
+        render(React.cloneElement(children, { ref: instanceRef }));
       });
     } else {
-      ReactTestUtils.renderIntoDocument(React.cloneElement(children, { ref: instanceRef }));
+      render(React.cloneElement(children, { ref: instanceRef }));
     }
     return instanceRef.current;
   }
 
   let instance;
 
+  // Only use renderIntoDocument on class components
   if (waitForDidMount) {
     ReactTestUtils.act(() => {
       instance = ReactTestUtils.renderIntoDocument(children);
@@ -112,6 +142,12 @@ export function innerText(node) {
 export function createTestContainer() {
   const container = document.createElement('div');
   document.body.appendChild(container);
+
+  // we'll add it to the mounted containers regardless of whether it's actually
+  // added to document.body so the cleanup method works regardless of whether
+  // they're passing us a custom container or not.
+  mountedContainers.add(container);
+
   return container;
 }
 

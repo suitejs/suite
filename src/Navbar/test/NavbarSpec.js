@@ -1,10 +1,9 @@
 import React from 'react';
 import { getDOMNode } from '@test/testUtils';
-
 import Navbar from '../Navbar';
 import Nav from '../../Nav';
 
-describe('Navbar', () => {
+describe('<Navbar>', () => {
   it('Should render a navbar', () => {
     const instance = getDOMNode(<Navbar />);
     assert.include(instance.className, 'rs-navbar');

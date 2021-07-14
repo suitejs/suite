@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactTestUtils from 'react-dom/test-utils';
+import ReactTestUtils, { act, Simulate } from 'react-dom/test-utils';
 import { getDOMNode } from '@test/testUtils';
 import Dropdown from '../Dropdown';
 import Button from '../../Button';
@@ -28,7 +28,7 @@ function renderDropdown(ui) {
   };
 }
 
-describe('Dropdown', () => {
+describe('<Dropdown>', () => {
   it('Should render a button that controls a popup menu', () => {
     const instance = getDOMNode(
       <Dropdown title="Menu">
@@ -89,7 +89,7 @@ describe('Dropdown', () => {
     expect(menu.hidden, 'Menu is closed').to.be.true;
   });
 
-  it('Should toggle the menu on right-click given trigger "contextMenu"', () => {
+  it('Should open the menu on right-click given trigger "contextMenu"', () => {
     const { button, menu } = renderDropdown(
       <Dropdown trigger="contextMenu">
         <Dropdown.Item>Item 1</Dropdown.Item>
@@ -98,17 +98,11 @@ describe('Dropdown', () => {
       </Dropdown>
     );
 
-    ReactTestUtils.act(() => {
-      ReactTestUtils.Simulate.contextMenu(button);
+    act(() => {
+      Simulate.contextMenu(button);
     });
 
     expect(!menu.hidden, 'Menu is open').to.be.true;
-
-    ReactTestUtils.act(() => {
-      ReactTestUtils.Simulate.contextMenu(button);
-    });
-
-    expect(menu.hidden, 'Menu is closed').to.be.true;
   });
 
   it('Should be disabled given `disabled=true`', () => {
@@ -121,7 +115,7 @@ describe('Dropdown', () => {
     assert.include(instance.className, 'rs-dropdown-disabled');
   });
 
-  it('Should hava a custom className in toggle', () => {
+  it('Should have a custom className in toggle', () => {
     const instance = getDOMNode(
       <Dropdown toggleClassName="custom-toggle">
         <Dropdown.Item>1</Dropdown.Item>
@@ -171,7 +165,7 @@ describe('Dropdown', () => {
     assert.ok(!instance.querySelector('.rs-dropdown-toggle-caret'));
   });
 
-  it('Should call onSelect callback', done => {
+  it('Should call onSelect callback when clicking an item', done => {
     const doneOp = eventKey => {
       if (eventKey === 2) {
         done();
@@ -186,6 +180,50 @@ describe('Dropdown', () => {
     ReactTestUtils.Simulate.click(
       instance.querySelectorAll('.rs-dropdown-menu [role="menuitem"]')[1]
     );
+  });
+
+  it('Should close menu after clicking an item without submenu', () => {
+    const instance = getDOMNode(
+      <Dropdown>
+        <Dropdown.Item id="menu-item">1</Dropdown.Item>
+      </Dropdown>
+    );
+
+    const button = instance.querySelector('[role="button"]');
+
+    // Open the menu
+    act(() => {
+      Simulate.click(button);
+    });
+
+    act(() => {
+      Simulate.click(instance.querySelector('#menu-item'));
+    });
+    const menu = instance.querySelector('[role="menu"]');
+
+    expect(menu.hidden, 'Menu is closed').to.be.true;
+  });
+
+  it('Should close menu after clicking an item without submenu (inside a submenu)', () => {
+    const { root, button, menu } = renderDropdown(
+      <Dropdown>
+        <Dropdown.Item>Menu item</Dropdown.Item>
+        <Dropdown.Menu title="Submenu">
+          <Dropdown.Item id="submenu-item">Submenu item</Dropdown.Item>
+        </Dropdown.Menu>
+      </Dropdown>
+    );
+
+    // Open the menu
+    act(() => {
+      Simulate.click(button);
+    });
+
+    act(() => {
+      Simulate.click(root.querySelector('#submenu-item'));
+    });
+
+    expect(menu.hidden, 'Menu is closed').to.be.true;
   });
 
   it('Should call onToggle callback', done => {
@@ -263,7 +301,7 @@ describe('Dropdown', () => {
     assert.ok(instance.className.match(/\bcustom-prefix\b/));
   });
 
-  describe('Keyboard interaction', () => {
+  describe('Keyboard interaction & Focus management', () => {
     /**
      * @param ui
      * @param openMenuAfterRendered Whether open the menu after Dropdown is rendered

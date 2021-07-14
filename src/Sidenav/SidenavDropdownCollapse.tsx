@@ -4,33 +4,26 @@ import classNames from 'classnames';
 import Collapse from '../Animation/Collapse';
 import { mergeRefs, useClassNames } from '../utils';
 import { StandardProps } from '../@types/common';
-import useEnsuredRef from '../utils/useEnsuredRef';
 
-export interface TreeviewItemGroupProps<T = string> extends StandardProps {
+export interface SidenavDropdownCollapseProps extends StandardProps {
   open?: boolean;
-  expanded?: boolean;
-  onToggle?: (eventKey: T, event: React.SyntheticEvent<Element>) => void;
 }
 
-const defaultProps: Partial<TreeviewItemGroupProps> = {
+const defaultProps: Partial<SidenavDropdownCollapseProps> = {
   classPrefix: 'dropdown-menu'
 };
 
-/**
- * Just a container for a group of treeitems
- */
-const TreeviewItemGroup = React.forwardRef(
-  (props: TreeviewItemGroupProps & React.HTMLAttributes<HTMLUListElement>, ref) => {
-    const { className, classPrefix, expanded, ...restProps } = props;
+const SidenavDropdownCollapse = React.forwardRef(
+  (props: SidenavDropdownCollapseProps & React.HTMLAttributes<HTMLUListElement>, ref) => {
+    const { className, classPrefix, open, ...restProps } = props;
 
     const { withClassPrefix, merge, prefix } = useClassNames(classPrefix);
-    const menuRef = useEnsuredRef<HTMLUListElement>(ref);
 
     const classes = merge(className, withClassPrefix());
 
     return (
       <Collapse
-        in={expanded}
+        in={open}
         exitedClassName={prefix`collapse-out`}
         exitingClassName={prefix`collapsing`}
         enteredClassName={prefix`collapse-in`}
@@ -41,7 +34,7 @@ const TreeviewItemGroup = React.forwardRef(
 
           return (
             <ul
-              ref={mergeRefs(transitionRef, menuRef)}
+              ref={mergeRefs(ref, transitionRef)}
               role="group"
               className={classNames(classes, transitionClassName)}
               {...restProps}
@@ -54,15 +47,13 @@ const TreeviewItemGroup = React.forwardRef(
   }
 );
 
-TreeviewItemGroup.displayName = 'Treeview.ItemGroup';
-TreeviewItemGroup.defaultProps = defaultProps;
-TreeviewItemGroup.propTypes = {
+SidenavDropdownCollapse.displayName = 'Sidenav.Dropdown.Collapse';
+SidenavDropdownCollapse.defaultProps = defaultProps;
+SidenavDropdownCollapse.propTypes = {
   className: PropTypes.string,
   children: PropTypes.node,
   classPrefix: PropTypes.string,
-  open: PropTypes.bool,
-  expanded: PropTypes.bool,
-  onToggle: PropTypes.func
+  open: PropTypes.bool
 };
 
-export default TreeviewItemGroup;
+export default SidenavDropdownCollapse;

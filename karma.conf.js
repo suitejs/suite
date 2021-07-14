@@ -34,13 +34,18 @@ module.exports = config => {
     /** How long will Karma wait for a message from a browser before disconnecting from it (in ms). */
     browserNoActivityTimeout: 210000,
     basePath: '',
-    files: [testFile],
-    frameworks: ['mocha', 'sinon-chai'],
+    files: [testFile].map(pattern => ({ pattern, watched: false })),
+    frameworks: ['mocha', 'sinon-chai', 'webpack'],
     colors: true,
     reporters: ['mocha', 'coverage'],
     logLevel: config.LOG_INFO,
     preprocessors: {
       'src/**/*Spec.js': ['webpack']
+    },
+    client: {
+      mocha: {
+        require: [require.resolve('./test/chai-assertions.js')]
+      }
     },
     webpack: require('./webpack.karma.js'),
     webpackMiddleware: {

@@ -10,15 +10,15 @@ export default function useFocus<E extends HTMLElement>(elementRef: React.Mutabl
     requestAnimationFrame(() => {
       if (document.activeElement !== elementRef.current) {
         previousActiveElementRef.current = document.activeElement as HTMLElement;
-        elementRef.current.focus();
+        elementRef.current?.focus();
       }
     });
   }, [elementRef]);
 
   // Return focus to previous active element
-  const release = useCallback(() => {
+  const release = useCallback((options?: FocusOptions) => {
     requestAnimationFrame(() => {
-      previousActiveElementRef.current?.focus();
+      previousActiveElementRef.current?.focus(options);
     });
   }, []);
 

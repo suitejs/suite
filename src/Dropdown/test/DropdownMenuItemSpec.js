@@ -1,107 +1,92 @@
 import React from 'react';
-import ReactTestUtils from 'react-dom/test-utils';
+import ReactTestUtils, { act, Simulate } from 'react-dom/test-utils';
 import { innerText, getDOMNode } from '@test/testUtils';
 
-import DropdownMenuItem from '../MenuItem';
-import Sidenav from '../../Sidenav';
+import DropdownItem from '../DropdownItem';
 import User from '@rsuite/icons/legacy/User';
 
-describe('DropdownMenuItem', () => {
+describe('<Dropdown.Item>', () => {
   it('Should render element with role="menuitem"', () => {
     const title = 'Test';
-    const instance = getDOMNode(<DropdownMenuItem>{title}</DropdownMenuItem>);
+    const instance = getDOMNode(<DropdownItem>{title}</DropdownItem>);
 
     assert.equal(instance.getAttribute('role'), 'menuitem', 'role');
     assert.equal(innerText(instance), title);
   });
 
-  it('Should render a <a>', () => {
+  it('Should render an <a> element given as="a"', () => {
     const title = 'Test';
-    const instance = getDOMNode(<DropdownMenuItem as="a">{title}</DropdownMenuItem>);
+    const instance = getDOMNode(<DropdownItem as="a">{title}</DropdownItem>);
     assert.equal(instance.tagName, 'A');
     assert.equal(innerText(instance), title);
   });
 
   it('Should render a divider', () => {
-    const instance = getDOMNode(<DropdownMenuItem divider />);
+    const instance = getDOMNode(<DropdownItem divider />);
     assert.include(instance.className, 'rs-dropdown-item-divider');
   });
 
   it('Should render a panel', () => {
-    const instance = getDOMNode(<DropdownMenuItem panel />);
+    const instance = getDOMNode(<DropdownItem panel />);
     assert.include(instance.className, 'rs-dropdown-item-panel');
   });
 
   it('Should be active', () => {
-    const instance = getDOMNode(<DropdownMenuItem active />);
+    const instance = getDOMNode(<DropdownItem active />);
     assert.include(instance.className, 'rs-dropdown-item-active');
   });
 
-  it('Should render menuitem that controls submenu given `submenu`', () => {
-    const instance = getDOMNode(<DropdownMenuItem submenu={<ul></ul>} />);
-    assert.include(['true', 'menu'], instance.getAttribute('aria-haspopup'));
-  });
-
-  it('Should be expanded in `Sidenav`', () => {
-    const instance = getDOMNode(
-      <Sidenav>
-        <DropdownMenuItem expanded submenu={<ul></ul>} />
-      </Sidenav>
-    );
-    const Item = instance.querySelector('.rs-dropdown-item');
-    assert.include(Item.className, 'rs-dropdown-item-expand');
-  });
-
   it('Should be disabled', () => {
-    const instance = getDOMNode(<DropdownMenuItem disabled />);
+    const instance = getDOMNode(<DropdownItem disabled />);
     assert.include(instance.className, 'rs-dropdown-item-disabled');
   });
 
   it('Should render a icon', () => {
-    const instance = getDOMNode(<DropdownMenuItem icon={<User />} />);
+    const instance = getDOMNode(<DropdownItem icon={<User />} />);
     assert.ok(instance.querySelector('.rs-icon'));
   });
 
-  it('Should call onSelect callback', done => {
-    const doneOp = eventKey => {
-      if (eventKey === 'ABC') {
-        done();
-      }
-    };
+  it('Should call onSelect callback with correct `eventKey`', () => {
+    const onSelectSpy = sinon.spy();
+
     const instance = getDOMNode(
-      <DropdownMenuItem onSelect={doneOp} eventKey="ABC">
+      <DropdownItem onSelect={onSelectSpy} eventKey="ABC">
         Title
-      </DropdownMenuItem>
+      </DropdownItem>
     );
-    ReactTestUtils.Simulate.click(instance);
+    act(() => {
+      Simulate.click(instance);
+    });
+
+    expect(onSelectSpy).to.have.been.calledWith('ABC');
   });
 
   it('Should call onClick callback', done => {
     const doneOp = () => {
       done();
     };
-    const instance = getDOMNode(<DropdownMenuItem onClick={doneOp}>Title</DropdownMenuItem>);
+    const instance = getDOMNode(<DropdownItem onClick={doneOp}>Title</DropdownItem>);
     ReactTestUtils.Simulate.click(instance);
   });
 
   it('Should have a custom className', () => {
-    const instance = getDOMNode(<DropdownMenuItem className="custom" />);
+    const instance = getDOMNode(<DropdownItem className="custom" />);
     assert.include(instance.className, 'custom');
   });
 
   it('Should have a custom style', () => {
     const fontSize = '12px';
-    const instance = getDOMNode(<DropdownMenuItem style={{ fontSize }} />);
+    const instance = getDOMNode(<DropdownItem style={{ fontSize }} />);
     assert.equal(instance.style.fontSize, fontSize);
   });
 
   it('Should have a custom className prefix', () => {
-    const instance = getDOMNode(<DropdownMenuItem classPrefix="custom-prefix" />);
+    const instance = getDOMNode(<DropdownItem classPrefix="custom-prefix" />);
     assert.ok(instance.className.match(/\bcustom-prefix\b/));
   });
 
   it('Should accept a custom `id`', () => {
-    const menuitem = getDOMNode(<DropdownMenuItem id="custom-id">Menu item</DropdownMenuItem>);
+    const menuitem = getDOMNode(<DropdownItem id="custom-id">Menu item</DropdownItem>);
     assert.equal(menuitem.getAttribute('id'), 'custom-id', 'id');
   });
 });

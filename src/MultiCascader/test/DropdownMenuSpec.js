@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactTestUtils from 'react-dom/test-utils';
+import ReactTestUtils, { act } from 'react-dom/test-utils';
 import { getDOMNode, getInstance } from '@test/testUtils';
 import DropdownMenu from '../DropdownMenu';
 import MultiCascader from '../MultiCascader';
@@ -111,11 +111,13 @@ describe('MultiCascader -  DropdownMenu', () => {
       />
     );
 
-    setTimeout(() => {
+    act(() => {
       ReactTestUtils.Simulate.click(instance.overlay.querySelectorAll('.rs-checkbox')[0]);
+    });
+    act(() => {
       ReactTestUtils.Simulate.click(instance.overlay.querySelectorAll('.rs-checkbox')[2]);
-      assert.equal(onSelectSpy.callCount, 2);
-    }, 1);
+    });
+    assert.equal(onSelectSpy.callCount, 2);
   });
 
   it('Should not call onSelect callback on disabled item', () => {

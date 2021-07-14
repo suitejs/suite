@@ -1,11 +1,14 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import ReactTestUtils from 'react-dom/test-utils';
+import { getByTestId, screen } from '@testing-library/react';
 import { getDOMNode, createTestContainer, innerText } from '@test/testUtils';
 
 import NavItem from '../NavItem';
+import Sidenav from '../../Sidenav';
+import Nav from '../Nav';
 
-describe('NavItem', () => {
+describe('<Nav.Item>', () => {
   it('Should render a <a>', () => {
     let title = 'Test';
     let instance = getDOMNode(<NavItem>{title}</NavItem>);
@@ -34,13 +37,25 @@ describe('NavItem', () => {
   });
 
   it('Should render a separator', () => {
-    let instance = getDOMNode(<NavItem divider />);
-    assert.include(instance.className, 'rs-nav-item-divider');
+    let instance = getDOMNode(
+      <Sidenav>
+        <Nav>
+          <NavItem divider data-testid="nav-item" />
+        </Nav>
+      </Sidenav>
+    );
+    assert.include(getByTestId(instance, 'nav-item').className, 'rs-nav-item-divider');
   });
 
   it('Should render a panel', () => {
-    let instance = getDOMNode(<NavItem panel />);
-    assert.include(instance.className, 'rs-nav-item-panel');
+    let instance = getDOMNode(
+      <Sidenav>
+        <Nav>
+          <NavItem panel data-testid="nav-item" />
+        </Nav>
+      </Sidenav>
+    );
+    assert.include(getByTestId(instance, 'nav-item').className, 'rs-nav-item-panel');
   });
 
   it('Should be active', () => {
@@ -85,22 +100,21 @@ describe('NavItem', () => {
     assert.ok(instance.className.match(/\bcustom-prefix\b/));
   });
 
-  it('Should render a tooltip', () => {
-    const itemRef = React.createRef();
-
+  it('Should render a tooltip when used inside a collapsed <Sidenav>', async () => {
+    const container = createTestContainer();
     ReactTestUtils.act(() => {
       ReactDOM.render(
-        <NavItem ref={itemRef} tooltip>
-          item
-        </NavItem>,
-        createTestContainer()
+        <Sidenav expanded={false}>
+          <NavItem data-testid="nav-item">item</NavItem>
+        </Sidenav>,
+        container
       );
     });
 
     ReactTestUtils.act(() => {
-      ReactTestUtils.Simulate.focus(itemRef.current.root);
+      ReactTestUtils.Simulate.focus(getByTestId(container, 'nav-item'));
     });
 
-    assert.equal(itemRef.current.overlay.getAttribute('role'), 'tooltip');
+    expect(screen.getByRole('tooltip'), 'Tooltip').not.to.be.null;
   });
 });

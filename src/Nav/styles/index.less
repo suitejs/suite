@@ -43,11 +43,10 @@
     color: var(--rs-navs-text-hover);
   }
 
-  &:focus,
-  &&-focus {
+  &:focus-visible {
     .focus-ring();
 
-    z-index: 2; // :focus has larger z-index than -active
+    z-index: 1;
   }
 
   &:active {

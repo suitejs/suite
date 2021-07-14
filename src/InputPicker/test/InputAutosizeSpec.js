@@ -26,6 +26,7 @@ describe('InputPicker - InputAutosize', () => {
 
   it('Should have a placeholder', () => {
     const instance = getDOMNode(<InputAutosize placeholder="placeholder" />);
-    assert.equal(instance.innerText, 'placeholder');
+
+    assert.equal(instance.textContent, 'placeholder');
   });
 });

@@ -1,11 +1,15 @@
 import { RsRefForwardingComponent, WithAsProps } from '../@types/common';
-import React, { useContext } from 'react';
+import React, { useCallback, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { IconProps } from '@rsuite/icons/lib/Icon';
 import { SidenavContext } from '../Sidenav/Sidenav';
-import TreeviewItem from '../Sidenav/TreeviewItem';
 import deprecatePropType from '../utils/deprecatePropType';
-import MenuItem from './MenuItem';
+import MenuItem from '../Menu/MenuItem';
+import DropdownContext from './DropdownContext';
+import isNil from 'lodash/isNil';
+import { mergeRefs, shallowEqual, useClassNames } from '../utils';
+import { NavbarContext } from '../Navbar/Navbar';
+import SidenavDropdownItem from '../Sidenav/SidenavDropdownItem';
 
 export interface DropdownMenuItemProps<T = any>
   extends WithAsProps,
@@ -43,9 +47,6 @@ export interface DropdownMenuItemProps<T = any>
    */
   pullLeft?: boolean;
 
-  /** Triggering event for submenu expansion. */
-  trigger?: 'hover' | 'click';
-
   /**
    * Whether the submenu is opened.
    * @deprecated
@@ -53,17 +54,13 @@ export interface DropdownMenuItemProps<T = any>
    */
   open?: boolean;
 
-  /** Whether the submenu is expanded, used in Sidenav. */
-  expanded?: boolean;
-
   /** Select the callback function for the current option  */
   onSelect?: (eventKey: T, event: React.SyntheticEvent<HTMLElement>) => void;
 }
 
 const defaultProps: Partial<DropdownMenuItemProps> = {
   as: 'li',
-  classPrefix: 'dropdown-item',
-  trigger: 'hover'
+  classPrefix: 'dropdown-item'
 };
 
 /**
@@ -73,14 +70,119 @@ const defaultProps: Partial<DropdownMenuItemProps> = {
  */
 const DropdownItem: RsRefForwardingComponent<'li', DropdownMenuItemProps> = React.forwardRef(
   (props: DropdownMenuItemProps, ref: React.Ref<any>) => {
+    const { classPrefix, className, active: activeProp, eventKey, onSelect, icon, ...rest } = props;
+
+    const dropdown = useContext(DropdownContext);
+    const { merge, withClassPrefix, prefix } = useClassNames(classPrefix);
+
+    const handleSelectItem = useCallback(
+      (event: React.SyntheticEvent<HTMLElement>) => {
+        onSelect?.(eventKey, event);
+        dropdown?.onSelect?.(eventKey, event);
+      },
+      [onSelect, eventKey, dropdown]
+    );
+
     const sidenav = useContext(SidenavContext);
+    const navbar = useContext(NavbarContext);
 
     if (sidenav?.expanded) {
-      const { children, ...restProps } = props;
-      return <TreeviewItem ref={ref} title={children} {...restProps} />;
+      return <SidenavDropdownItem ref={ref} {...props} />;
     }
 
-    return <MenuItem ref={ref} {...props} />;
+    const menuitemSelected =
+      activeProp || (!isNil(eventKey) && shallowEqual(dropdown?.activeKey, eventKey));
+
+    const { as: Component, divider, panel, children, disabled, ...restProps } = rest;
+
+    if (divider) {
+      return (
+        <Component
+          ref={ref}
+          role="separator"
+          className={merge(prefix('divider'), className)}
+          {...restProps}
+        />
+      );
+    }
+
+    if (panel) {
+      return (
+        <Component
+          ref={ref}
+          role="none presentation"
+          className={merge(prefix('panel'), className)}
+          {...restProps}
+        >
+          {children}
+        </Component>
+      );
+    }
+
+    if (navbar) {
+      const classes = merge(
+        className,
+        withClassPrefix({
+          'with-icon': icon,
+          disabled,
+          divider,
+          panel
+        })
+      );
+      const dataAttributes: { [key: string]: any } = {
+        'data-event-key': eventKey
+      };
+
+      if (!isNil(eventKey) && typeof eventKey !== 'string') {
+        dataAttributes['data-event-key-type'] = typeof eventKey;
+      }
+      return (
+        <li>
+          <a ref={ref} href="#" className={classes} {...dataAttributes} {...restProps}>
+            {icon && React.cloneElement(icon, { className: prefix('menu-icon') })}
+            {children}
+          </a>
+        </li>
+      );
+    }
+
+    return (
+      <MenuItem selected={menuitemSelected} disabled={disabled} onActivate={handleSelectItem}>
+        {({ selected, active, ...menuitem }, menuitemRef) => {
+          const classes = merge(
+            className,
+            withClassPrefix({
+              'with-icon': icon,
+              active: selected,
+              disabled,
+              focus: active,
+              divider,
+              panel
+            })
+          );
+
+          const dataAttributes: { [key: string]: any } = {
+            'data-event-key': eventKey
+          };
+
+          if (!isNil(eventKey) && typeof eventKey !== 'string') {
+            dataAttributes['data-event-key-type'] = typeof eventKey;
+          }
+          return (
+            <Component
+              ref={mergeRefs(ref, menuitemRef)}
+              className={classes}
+              {...menuitem}
+              {...dataAttributes}
+              {...restProps}
+            >
+              {icon && React.cloneElement(icon, { className: prefix('menu-icon') })}
+              {children}
+            </Component>
+          );
+        }}
+      </MenuItem>
+    );
   }
 );
 
@@ -92,7 +194,6 @@ DropdownItem.propTypes = {
   panel: PropTypes.bool,
   trigger: PropTypes.oneOfType([PropTypes.array, PropTypes.oneOf(['click', 'hover'])]),
   open: deprecatePropType(PropTypes.bool),
-  expanded: PropTypes.bool,
   active: PropTypes.bool,
   disabled: PropTypes.bool,
   pullLeft: deprecatePropType(PropTypes.bool),

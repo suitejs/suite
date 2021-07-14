@@ -33,7 +33,7 @@ describe('Whisper', () => {
       </Whisper>
     );
 
-    ReactTestUtils.Simulate.blur(whisper);
+    ReactTestUtils.Simulate.focus(whisper);
     assert.equal(document.getElementsByClassName('test-whisper').length, 1);
   });
 

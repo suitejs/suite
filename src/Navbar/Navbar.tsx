@@ -12,7 +12,6 @@ type AppearanceType = 'default' | 'inverse' | 'subtle';
 export interface NavbarProps extends WithAsProps {
   appearance?: AppearanceType;
   classPrefix?: string;
-  hasChildContext?: boolean;
 }
 
 interface NavbarComponent extends RsRefForwardingComponent<'div', NavbarProps> {
@@ -28,19 +27,18 @@ interface NavbarComponent extends RsRefForwardingComponent<'div', NavbarProps> {
 }
 
 const defaultProps: Partial<NavbarProps> = {
-  as: 'div',
-  hasChildContext: true,
+  as: 'nav',
   classPrefix: 'navbar',
   appearance: 'default'
 };
 
 const Navbar: NavbarComponent = (React.forwardRef(
   (props: NavbarProps, ref: React.Ref<HTMLElement>) => {
-    const { className, as: Component, hasChildContext, classPrefix, appearance, ...rest } = props;
+    const { className, as: Component, classPrefix, appearance, ...rest } = props;
     const { withClassPrefix, merge } = useClassNames(classPrefix);
     const classes = merge(className, withClassPrefix(appearance));
     return (
-      <NavbarContext.Provider value={hasChildContext}>
+      <NavbarContext.Provider value={true}>
         <Component {...rest} ref={ref} className={classes} />
       </NavbarContext.Provider>
     );

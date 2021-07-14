@@ -1,12 +1,17 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useContext } from 'react';
 import PropTypes from 'prop-types';
+import isNil from 'lodash/isNil';
+import omit from 'lodash/omit';
 import Ripple from '../Ripple';
 import SafeAnchor from '../SafeAnchor';
-import { useClassNames, appendTooltip } from '../utils';
-import { WithAsProps, RsRefForwardingComponent, TypeAttributes } from '../@types/common';
+import { appendTooltip, mergeRefs, shallowEqual, useClassNames } from '../utils';
+import { RsRefForwardingComponent, WithAsProps } from '../@types/common';
 import { IconProps } from '@rsuite/icons/lib/Icon';
 import { SidenavContext } from '../Sidenav/Sidenav';
-import TreeviewRootItem from '../Sidenav/TreeviewRootItem';
+import NavContext from './NavContext';
+import { NavbarContext } from '../Navbar/Navbar';
+import MenuItem from '../Menu/MenuItem';
+import SidenavItem from '../Sidenav/SidenavItem';
 
 export interface NavItemProps<T = string>
   extends WithAsProps,
@@ -29,9 +34,6 @@ export interface NavItemProps<T = string>
   /** The value of the current option */
   eventKey?: T;
 
-  /** Whether NavItem have a tooltip  */
-  tooltip?: boolean | TypeAttributes.Placement;
-
   /** Providing a `href` will render an `<a>` element */
   href?: string;
 
@@ -41,15 +43,17 @@ export interface NavItemProps<T = string>
 
 const defaultProps: Partial<NavItemProps> = {
   classPrefix: 'nav-item',
-  as: SafeAnchor,
-  tabIndex: 0
+  as: SafeAnchor
 };
 
+/**
+ * The <Nav.Item> API
+ */
 const NavItem: RsRefForwardingComponent<'a', NavItemProps> = React.forwardRef(
   (props: NavItemProps, ref: React.Ref<any>) => {
     const {
       as: Component,
-      active,
+      active: activeProp,
       disabled,
       eventKey,
       className,
@@ -57,8 +61,6 @@ const NavItem: RsRefForwardingComponent<'a', NavItemProps> = React.forwardRef(
       style,
       children,
       icon,
-      tabIndex,
-      tooltip,
       divider,
       panel,
       onClick,
@@ -66,7 +68,12 @@ const NavItem: RsRefForwardingComponent<'a', NavItemProps> = React.forwardRef(
       ...rest
     } = props;
 
-    const sidenav = React.useContext(SidenavContext);
+    const { activeKey } = useContext(NavContext);
+
+    const active = activeProp ?? (!isNil(eventKey) && shallowEqual(eventKey, activeKey));
+
+    const navbar = useContext(NavbarContext);
+    const sidenav = useContext(SidenavContext);
 
     const { withClassPrefix, merge, prefix } = useClassNames(classPrefix);
     const classes = merge(className, withClassPrefix({ active, disabled }));
@@ -82,8 +89,61 @@ const NavItem: RsRefForwardingComponent<'a', NavItemProps> = React.forwardRef(
     );
 
     if (sidenav?.expanded) {
-      const { children, ...restProps } = props;
-      return <TreeviewRootItem title={children} {...restProps} />;
+      return <SidenavItem {...props} />;
+    }
+
+    // If <Nav.Item> is inside collapsed <Sidenav>, render an ARIA `menuitem`
+    if (sidenav) {
+      return (
+        <MenuItem selected={active} disabled={disabled} onActivate={e => onSelect?.(eventKey, e)}>
+          {({ selected, active, ...menuitem }, menuitemRef) => {
+            const classes = merge(
+              className,
+              withClassPrefix({ focus: active, active: selected, disabled })
+            );
+
+            const item = (
+              <Component
+                ref={mergeRefs(ref, menuitemRef)}
+                disabled={Component === SafeAnchor ? disabled : undefined}
+                className={classes}
+                data-event-key={eventKey}
+                {...menuitem}
+                {...omit(rest, ['divider', 'panel'])}
+              >
+                {icon}
+                {children}
+                <Ripple />
+              </Component>
+            );
+
+            // Show tooltip when inside a collapse <Sidenav>
+            return sidenav
+              ? appendTooltip({
+                  children: (triggerProps, triggerRef) => {
+                    return (
+                      <Component
+                        ref={mergeRefs(mergeRefs(ref, menuitemRef), triggerRef as any)}
+                        disabled={Component === SafeAnchor ? disabled : undefined}
+                        className={classes}
+                        data-event-key={eventKey}
+                        {...menuitem}
+                        {...omit(rest, ['divider', 'panel'])}
+                        {...triggerProps}
+                      >
+                        {icon}
+                        {children}
+                        <Ripple />
+                      </Component>
+                    );
+                  },
+                  message: children,
+                  placement: 'right'
+                })
+              : item;
+          }}
+        </MenuItem>
+      );
     }
 
     if (divider) {
@@ -93,51 +153,58 @@ const NavItem: RsRefForwardingComponent<'a', NavItemProps> = React.forwardRef(
           role="separator"
           style={style}
           className={merge(className, prefix('divider'))}
+          {...rest}
         />
       );
     }
 
     if (panel) {
       return (
-        <div ref={ref} style={style} className={merge(className, prefix('panel'))}>
+        <div ref={ref} style={style} className={merge(className, prefix('panel'))} {...rest}>
           {children}
         </div>
       );
     }
 
-    const ariaAttributes: React.HTMLAttributes<HTMLElement> = {};
+    if (navbar) {
+      return (
+        <a
+          ref={ref}
+          href="#"
+          aria-selected={active || undefined}
+          {...rest}
+          className={classes}
+          onClick={handleClick}
+          style={style}
+        >
+          {icon}
+          {children}
+          <Ripple />
+        </a>
+      );
+    }
 
-    const item = (
-      <Component
-        aria-selected={active}
+    return (
+      <a
+        ref={ref}
+        href="#"
+        tabIndex={disabled ? -1 : undefined}
         {...rest}
-        tabIndex={tabIndex}
-        disabled={Component === SafeAnchor ? disabled : null}
         className={classes}
         onClick={handleClick}
-        ref={ref}
         style={style}
-        {...ariaAttributes}
+        aria-selected={active || undefined}
       >
         {icon}
         {children}
         <Ripple />
-      </Component>
+      </a>
     );
-
-    return tooltip
-      ? appendTooltip({
-          ref,
-          children: item,
-          message: children,
-          placement: typeof tooltip === 'boolean' ? 'right' : tooltip
-        })
-      : item;
   }
 );
 
 NavItem.defaultProps = defaultProps;
-NavItem.displayName = 'NavItem';
+NavItem.displayName = 'Nav.Item';
 NavItem.propTypes = {
   as: PropTypes.elementType,
   active: PropTypes.bool,
@@ -151,9 +218,7 @@ NavItem.propTypes = {
   icon: PropTypes.node,
   onSelect: PropTypes.func,
   children: PropTypes.node,
-  eventKey: PropTypes.any,
-  tabIndex: PropTypes.number,
-  tooltip: PropTypes.bool
+  eventKey: PropTypes.any
 };
 
 export default NavItem;

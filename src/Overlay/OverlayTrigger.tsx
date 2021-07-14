@@ -385,7 +385,6 @@ const OverlayTrigger = React.forwardRef((props: OverlayTriggerProps, ref) => {
       </Overlay>
     );
   };
-
   return (
     <>
       {typeof children === 'function'

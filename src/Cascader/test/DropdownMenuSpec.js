@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactTestUtils from 'react-dom/test-utils';
+import ReactTestUtils, { act } from 'react-dom/test-utils';
 
 import { getDOMNode, getInstance } from '@test/testUtils';
 import DropdownMenu from '../DropdownMenu';
@@ -101,15 +101,17 @@ describe('Cascader -  DropdownMenu', () => {
       <Dropdown defaultOpen data={items} disabledItemValues={['abcd']} onSelect={onSelectSpy} />
     );
 
-    setTimeout(() => {
+    act(() => {
       ReactTestUtils.Simulate.click(
         instance.overlay.querySelectorAll('.rs-picker-cascader-menu-item')[0]
       );
+    });
+    act(() => {
       ReactTestUtils.Simulate.click(
         instance.overlay.querySelectorAll('.rs-picker-cascader-menu-item')[2]
       );
-      assert.equal(onSelectSpy.callCount, 2);
-    }, 1);
+    });
+    assert.equal(onSelectSpy.callCount, 2);
   });
 
   it('Should not call onSelect callback on disabled item', () => {

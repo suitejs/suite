@@ -33,7 +33,6 @@
     "tdd": "cross-env RUN_ENV=test karma start",
     "test": "npm run format:check && npm run lint && npm run test:component && npm run test:less",
     "test:component": "cross-env NODE_ENV=coverage RUN_ENV=test karma start --single-run",
-    "test:styles": "node test/stylesSpec.js",
     "test:less": "mocha test/testLessPlugins.js"
   },
   "keywords": [
@@ -101,7 +100,9 @@
     "@commitlint/config-conventional": "^8.3.4",
     "@testing-library/react": "^11.2.3",
     "@testing-library/react-hooks": "^7.0.0",
+    "@testing-library/user-event": "^13.1.9",
     "@types/karma": "^5.0.1",
+    "@types/karma-mocha": "^1.3.1",
     "@types/karma-sinon-chai": "^2.0.0",
     "@types/karma-webpack": "^2.0.9",
     "@types/react": "^17.0.0",
@@ -154,7 +155,7 @@
     "less-loader": "^7.2.1",
     "lodash-webpack-plugin": "^0.11.5",
     "make-dir": "^1.3.0",
-    "mocha": "^2.5.3",
+    "mocha": "^9.0.2",
     "postcss-custom-properties": "^10.0.0",
     "prettier": "^2.2.1",
     "react": "^17.0.1",

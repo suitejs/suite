@@ -3,7 +3,7 @@ import Transition from '../Transition';
 import { getDOMNode, getInstance } from '@test/testUtils';
 
 describe('Animation', () => {
-  it('Should outout enteredClassName', () => {
+  it('Should output enteredClassName', () => {
     const instance = getDOMNode(
       <Transition in enteredClassName="class-in">
         <div>test</div>

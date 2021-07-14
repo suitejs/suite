@@ -4,6 +4,7 @@
   "jsRules": {},
   "rules": {
     "file-name-casing": false,
-    "no-unnecessary-generics": false
+    "no-unnecessary-generics": false,
+    "increment-decrement": [true, "allow-post"]
   }
 }

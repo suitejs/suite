@@ -1,12 +1,13 @@
 import React from 'react';
-import ReactTestUtils from 'react-dom/test-utils';
+import ReactTestUtils, { act, Simulate } from 'react-dom/test-utils';
 import { getDOMNode } from '@test/testUtils';
 
 import Sidenav from '../Sidenav';
 import Nav from '../../Nav';
 import Dropdown from '../../Dropdown';
+import { getByTestId } from '@testing-library/react';
 
-describe('Sidenav', () => {
+describe('<Sidenav>', () => {
   it('Should render a navigation', () => {
     const instance = getDOMNode(<Sidenav />);
     assert.include(instance.className, 'rs-sidenav');
@@ -64,10 +65,10 @@ describe('Sidenav', () => {
       <Sidenav defaultOpenKeys={['1', '2']}>
         <Sidenav.Body>
           <Nav>
-            <Dropdown eventKey="1" title="1" className="m-1">
+            <Dropdown eventKey="1" title="1" data-testid="menu-1">
               <Dropdown.Item eventKey="1-1">Geo</Dropdown.Item>
             </Dropdown>
-            <Dropdown eventKey="2" title="2" className="m-2">
+            <Dropdown eventKey="2" title="2" data-testid="menu-2">
               <Dropdown.Item eventKey="2-1">2-1</Dropdown.Item>
               <Dropdown.Menu eventKey="2-2" title="2-2" className="m-2-2">
                 <Dropdown.Item eventKey="2-2-1">2-2-1</Dropdown.Item>
@@ -79,9 +80,8 @@ describe('Sidenav', () => {
     );
 
     ['1', '2'].forEach(key => {
-      const menu = instance.querySelector(`.m-${key}`);
+      const menu = getByTestId(instance, `menu-${key}`);
 
-      assert.ok(menu.getAttribute('aria-expanded') === 'true', `Menu ${key} should be open`);
       assert.ok(
         menu.querySelector('[role="group"]').classList.contains('rs-dropdown-menu-collapse-in'),
         `Menu ${key} has transition class`
@@ -99,6 +99,26 @@ describe('Sidenav', () => {
         .classList.contains('rs-dropdown-menu-collapse-out'),
       'Menu 2-2 has transition class'
     );
+  });
+
+  it('<Dropdown> inside collapsed <Sidenav> should contain a header in its menu', () => {
+    const instance = getDOMNode(
+      <Sidenav expanded={false}>
+        <Sidenav.Body>
+          <Nav>
+            <Dropdown eventKey="1" title="1" className="m-1">
+              <Dropdown.Item eventKey="1-1">Geo</Dropdown.Item>
+            </Dropdown>
+          </Nav>
+        </Sidenav.Body>
+      </Sidenav>
+    );
+
+    act(() => {
+      Simulate.click(instance.querySelector('.m-1'));
+    });
+
+    expect(instance.querySelector('.rs-dropdown-header')).not.to.be.null;
   });
 
   it('Should have a custom className', () => {
@@ -130,262 +150,5 @@ describe('Sidenav', () => {
     );
 
     expect(instance.querySelector('#selected-item').getAttribute('aria-selected')).to.equal('true');
-  });
-
-  /**
-   * Ref: https://www.w3.org/TR/wai-aria-practices/#keyboard-interaction-22
-   */
-  describe('Keyboard interaction', () => {
-    function renderSidenav(ui, focusAfterMount = true) {
-      const element = getDOMNode(ui);
-      const tree = element.querySelector('[role="tree"]');
-
-      if (focusAfterMount) {
-        ReactTestUtils.act(() => {
-          ReactTestUtils.Simulate.focus(tree);
-        });
-      }
-      return tree;
-    }
-
-    describe('Down Arrow', () => {
-      it('Moves focus to the next node that is focusable without opening or closing a node.', () => {
-        const treeview = renderSidenav(
-          <Sidenav>
-            <Nav>
-              <Nav.Item id="first-item">1</Nav.Item>
-              <Nav.Item id="second-item">2</Nav.Item>
-            </Nav>
-          </Sidenav>
-        );
-
-        ReactTestUtils.act(() => {
-          ReactTestUtils.Simulate.keyDown(treeview, { key: 'ArrowDown' });
-        });
-
-        expect(treeview.getAttribute('aria-activedescendant'), 'Active item').to.equal(
-          'second-item'
-        );
-      });
-    });
-    describe('Up Arrow', () => {
-      it('Moves focus to the previous node that is focusable without opening or closing a node.', () => {
-        const treeview = renderSidenav(
-          <Sidenav>
-            <Nav>
-              <Nav.Item id="first-item">1</Nav.Item>
-              <Nav.Item id="second-item">2</Nav.Item>
-            </Nav>
-          </Sidenav>
-        );
-
-        ReactTestUtils.act(() => {
-          ReactTestUtils.Simulate.keyDown(treeview, { key: 'ArrowDown' });
-        });
-
-        ReactTestUtils.act(() => {
-          ReactTestUtils.Simulate.keyDown(treeview, { key: 'ArrowUp' });
-        });
-
-        expect(treeview.getAttribute('aria-activedescendant'), 'Active item').to.equal(
-          'first-item'
-        );
-      });
-    });
-    describe('Right arrow', () => {
-      it('When focus is on a closed node, opens the node; focus does not move.', () => {
-        const treeview = renderSidenav(
-          <Sidenav>
-            <Nav>
-              <Nav.Item id="first-item">1</Nav.Item>
-              <Dropdown id="parent-item">
-                <Dropdown.Item id="first-child">1</Dropdown.Item>
-              </Dropdown>
-            </Nav>
-          </Sidenav>
-        );
-        ReactTestUtils.act(() => {
-          ReactTestUtils.Simulate.keyDown(treeview, { key: 'ArrowDown' });
-        });
-        ReactTestUtils.act(() => {
-          ReactTestUtils.Simulate.keyDown(treeview, { key: 'ArrowRight' });
-        });
-
-        const parentNode = treeview.querySelector('#parent-item');
-        expect(parentNode.getAttribute('aria-expanded'), 'Parent item expanded').to.equal('true');
-        expect(treeview.getAttribute('aria-activedescendant'), 'Active item').to.equal(
-          'parent-item'
-        );
-      });
-      it('When focus is on a open node, moves focus to the first child node.', () => {
-        const treeview = renderSidenav(
-          <Sidenav defaultOpenKeys={['parent-item']}>
-            <Nav>
-              <Nav.Item id="first-item">1</Nav.Item>
-              <Dropdown id="parent-item">
-                <Dropdown.Item id="child-item">1</Dropdown.Item>
-              </Dropdown>
-            </Nav>
-          </Sidenav>
-        );
-        ReactTestUtils.act(() => {
-          ReactTestUtils.Simulate.keyDown(treeview, { key: 'ArrowDown' });
-        });
-        ReactTestUtils.act(() => {
-          ReactTestUtils.Simulate.keyDown(treeview, { key: 'ArrowRight' });
-        });
-
-        expect(treeview.getAttribute('aria-activedescendant'), 'Active item').to.equal(
-          'child-item'
-        );
-      });
-      it('When focus is on an end node, does nothing.', () => {
-        const treeview = renderSidenav(
-          <Sidenav defaultOpenKeys={['parent-item']}>
-            <Nav>
-              <Nav.Item id="first-item">1</Nav.Item>
-              <Dropdown id="parent-item">
-                <Dropdown.Item id="child-item">1</Dropdown.Item>
-              </Dropdown>
-            </Nav>
-          </Sidenav>
-        );
-        ReactTestUtils.act(() => {
-          ReactTestUtils.Simulate.keyDown(treeview, { key: 'ArrowRight' });
-        });
-
-        expect(treeview.getAttribute('aria-activedescendant'), 'Active item').to.equal(
-          'first-item'
-        );
-      });
-    });
-    describe('Left arrow', () => {
-      it('When focus is on an open node, closes the node.', () => {
-        const treeview = renderSidenav(
-          <Sidenav defaultOpenKeys={['parent-item']}>
-            <Nav>
-              <Nav.Item id="first-item">1</Nav.Item>
-              <Dropdown id="parent-item">
-                <Dropdown.Item id="child-item">1</Dropdown.Item>
-              </Dropdown>
-            </Nav>
-          </Sidenav>
-        );
-        ReactTestUtils.act(() => {
-          ReactTestUtils.Simulate.keyDown(treeview, { key: 'ArrowDown' });
-        });
-        ReactTestUtils.act(() => {
-          ReactTestUtils.Simulate.keyDown(treeview, { key: 'ArrowLeft' });
-        });
-        const parentNode = treeview.querySelector('#parent-item');
-        expect(parentNode.getAttribute('aria-expanded'), 'Parent item expanded').to.equal('false');
-      });
-      it('When focus is on a child node that is also either an end node or a closed node, moves focus to its parent node.', () => {
-        const treeview = renderSidenav(
-          <Sidenav defaultOpenKeys={['parent-item']}>
-            <Nav>
-              <Nav.Item id="first-item">1</Nav.Item>
-              <Dropdown id="parent-item">
-                <Dropdown.Item id="child-item">1</Dropdown.Item>
-              </Dropdown>
-            </Nav>
-          </Sidenav>
-        );
-        ReactTestUtils.act(() => {
-          ReactTestUtils.Simulate.keyDown(treeview, { key: 'ArrowDown' });
-        });
-        ReactTestUtils.act(() => {
-          ReactTestUtils.Simulate.keyDown(treeview, { key: 'ArrowRight' });
-        });
-        ReactTestUtils.act(() => {
-          ReactTestUtils.Simulate.keyDown(treeview, { key: 'ArrowLeft' });
-        });
-
-        expect(treeview.getAttribute('aria-activedescendant'), 'Active item').to.equal(
-          'parent-item'
-        );
-      });
-      it('When focus is on a root node that is also either an end node or a closed node, does nothing.', () => {
-        const treeview = renderSidenav(
-          <Sidenav defaultOpenKeys={['parent-item']}>
-            <Nav>
-              <Nav.Item id="first-item">1</Nav.Item>
-              <Dropdown id="parent-item">
-                <Dropdown.Item id="child-item">1</Dropdown.Item>
-              </Dropdown>
-            </Nav>
-          </Sidenav>
-        );
-        ReactTestUtils.act(() => {
-          ReactTestUtils.Simulate.keyDown(treeview, { key: 'ArrowLeft' });
-        });
-
-        expect(treeview.getAttribute('aria-activedescendant'), 'Active item').to.equal(
-          'first-item'
-        );
-      });
-    });
-    describe('Enter: activates a node, i.e., performs its default action.', () => {
-      it('For parent nodes, one possible default action is to open or close the node.', () => {
-        const treeview = renderSidenav(
-          <Sidenav>
-            <Nav>
-              <Nav.Item id="first-item">1</Nav.Item>
-              <Dropdown id="parent-item">
-                <Dropdown.Item id="first-child">1</Dropdown.Item>
-              </Dropdown>
-            </Nav>
-          </Sidenav>
-        );
-        ReactTestUtils.act(() => {
-          ReactTestUtils.Simulate.keyDown(treeview, { key: 'ArrowDown' });
-        });
-        ReactTestUtils.act(() => {
-          ReactTestUtils.Simulate.keyDown(treeview, { key: 'Enter' });
-        });
-
-        const parentNode = treeview.querySelector('#parent-item');
-        expect(parentNode.getAttribute('aria-expanded'), 'Parent item expanded').to.equal('true');
-      });
-      it('In single-select trees where selection does not follow focus (see note below), the default action is typically to select the focused node.', () => {
-        const onSelectSpy = sinon.spy();
-        const treeview = renderSidenav(
-          <Sidenav onSelect={onSelectSpy}>
-            <Nav>
-              <Nav.Item id="first-item" eventKey="1">
-                1
-              </Nav.Item>
-              <Dropdown id="parent-item">
-                <Dropdown.Item id="first-child">1</Dropdown.Item>
-              </Dropdown>
-            </Nav>
-          </Sidenav>
-        );
-        ReactTestUtils.act(() => {
-          ReactTestUtils.Simulate.keyDown(treeview, { key: 'Enter' });
-        });
-
-        expect(onSelectSpy).to.have.been.calledWith('1');
-      });
-    });
-
-    it('Should not trigger focus management when item receives focus', () => {
-      const treeview = renderSidenav(
-        <Sidenav>
-          <Nav>
-            <Nav.Item id="first-item">1</Nav.Item>
-            <Dropdown id="parent-item">
-              <Dropdown.Item id="first-child">1</Dropdown.Item>
-            </Dropdown>
-          </Nav>
-        </Sidenav>,
-        false
-      );
-      ReactTestUtils.act(() => {
-        ReactTestUtils.Simulate.focus(treeview.querySelector('#first-item'));
-      });
-
-      expect(treeview.getAttribute('aria-activedescendant'), 'Active item').to.be.null;
-    });
   });
 });
