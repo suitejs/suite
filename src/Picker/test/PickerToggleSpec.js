@@ -81,4 +81,10 @@ describe('Toggle', () => {
     );
     assert.ok(instance.querySelector('[value="value1,value2"]'));
   });
+
+  it('Should be disabled', () => {
+    const instance = getDOMNode(<Toggle disabled>Title</Toggle>);
+    assert.equal(instance.getAttribute('aria-disabled'), 'true');
+    assert.equal(instance.getAttribute('tabindex'), undefined);
+  });
 });

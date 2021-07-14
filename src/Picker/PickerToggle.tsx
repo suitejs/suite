@@ -178,7 +178,7 @@ const PickerToggle: RsRefForwardingComponent<
       {...rest}
       ref={ref}
       disabled={disabled}
-      tabIndex={tabIndex}
+      tabIndex={disabled ? undefined : tabIndex}
       className={classes}
       onFocus={!disabled ? handleFocus : null}
       // The debounce is set to 200 to solve the flicker caused by the switch between input and div.
