@@ -1,7 +1,6 @@
 export * from './BrowserDetection';
 export * from './htmlPropsUtils';
 export * from './constants';
-export * as TimeZone from './timeZone';
 export * as DateUtils from './dateUtils';
 export * as TypeChecker from './propTypeChecker';
 export * from './statusIcons';

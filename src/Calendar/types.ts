@@ -15,7 +15,6 @@ export interface CalendarInnerContextValue {
   onSelect?: (date: Date, event: React.MouseEvent) => void;
   renderCell?: (date: Date) => React.ReactNode;
   showWeekNumbers?: boolean;
-  timeZone?: string;
   inline?: boolean;
 }
 

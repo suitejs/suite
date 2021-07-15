@@ -30,4 +30,3 @@ A component that displays data by calendar
 | onSelect     | (date:Date) => void       | Callback fired before the date selected                                              |
 | renderCell   | (date: Date) => ReactNode | Custom render calendar cells                                                         |
 | value        | Date                      | Controlled value                                                                     |
-| timeZone     | string                    | [IANA Time zone name](/components/date-picker#Time%20Zone%20List)                    |

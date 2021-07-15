@@ -177,11 +177,3 @@ const Ranges = [
   }
 ];
 ```
-
-## Time Zone
-
-#### Time Zone Tips
-
-`timeZone` 属性原则上只影响 UI 显示以方便使用者选择到指定时区的时间或日期，不影响组件**其他 API 回传**给外层组件的 `date` 对象。
-
-> 例如: `disabledDate: (date: Date) => boolean` 属性，在设定 `timeZone` 属性之后，`disabledDate` 属性回调传入的 `date` 对象仍然是基于当前时区的对应时间, 而不是指定时区下的时间。

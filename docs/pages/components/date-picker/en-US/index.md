@@ -156,7 +156,6 @@ Learn more in [Accessibility](/guide/accessibility).
 | showMeridian          | boolean                                                 | Display hours in 12 format                                                           |
 | showWeekNumbers       | boolean                                                 | Whether to show week numbers                                                         |
 | size                  | enum: 'lg' &#124; 'md' &#124; 'sm' &#124; 'xs' `('md')` | A picker can have different sizes                                                    |
-| timeZone              | string                                                  | [IANA Time zone name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)  |
 | toggleAs              | ElementType `('a')`                                     | You can use a custom element for this component                                      |
 | value                 | Date                                                    | Value (Controlled)                                                                   |
 
@@ -178,11 +177,3 @@ const Ranges = [
   }
 ];
 ```
-
-## Time Zone
-
-#### Time Zone Tips
-
-The `timeZone` property in principle only affects the UI display to facilitate the user to select the time or date in the specified time zone, and does not affect the `date` object returned by the component **other APIs** to the outer component.
-
-> For example: `disabledDate: (date: Date) => boolean` property, after setting the `timeZone` property, the `date` object passed in by the `disabledDate` property callback is still based on the corresponding time in the current time zone, not the specified time zone.

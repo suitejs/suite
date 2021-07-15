@@ -4,7 +4,7 @@ import { getPosition, scrollTop } from 'dom-lib';
 import partial from 'lodash/partial';
 import camelCase from 'lodash/camelCase';
 import isNumber from 'lodash/isNumber';
-import { DateUtils, scrollTopAnimation, TimeZone, useClassNames } from '../utils';
+import { DateUtils, scrollTopAnimation, useClassNames } from '../utils';
 
 import { useCalendarContext } from './CalendarContext';
 import { RsRefForwardingComponent, WithAsProps } from '../@types/common';
@@ -54,14 +54,9 @@ export function getMeridianHours(hours: number): number {
   return hours >= 12 ? hours - 12 : hours;
 }
 
-const getTime = (props: {
-  date: Date;
-  format?: string;
-  timeZone?: string;
-  showMeridian: boolean;
-}) => {
-  const { format, timeZone, date, showMeridian } = props;
-  const time = date || TimeZone.zonedDate(timeZone);
+const getTime = (props: { date: Date; format?: string; showMeridian: boolean }) => {
+  const { format, date, showMeridian } = props;
+  const time = date || new Date();
   const nextTime: Time = {};
 
   if (!format) {
@@ -100,14 +95,14 @@ const scrollTo = (time: Time, row: HTMLDivElement) => {
 const TimeDropdown: RsRefForwardingComponent<'div', TimeDropdownProps> = React.forwardRef(
   (props: TimeDropdownProps, ref) => {
     const { as: Component, className, classPrefix, show, showMeridian, ...rest } = props;
-    const { locale, format, timeZone, date, onChangePageTime: onSelect } = useCalendarContext();
+    const { locale, format, date, onChangePageTime: onSelect } = useCalendarContext();
     const rowRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-      const time = getTime({ format, timeZone, date, showMeridian });
+      const time = getTime({ format, date, showMeridian });
       // The currently selected time scrolls to the visible range.
       show && scrollTo(time, rowRef.current);
-    }, [date, format, show, showMeridian, timeZone]);
+    }, [date, format, show, showMeridian]);
 
     const handleClick = (type: TimeType, d: number, event: React.MouseEvent) => {
       let nextDate = date || new Date();
@@ -172,7 +167,7 @@ const TimeDropdown: RsRefForwardingComponent<'div', TimeDropdownProps> = React.f
       );
     };
 
-    const time = getTime({ format, timeZone, date, showMeridian });
+    const time = getTime({ format, date, showMeridian });
     const classes = merge(className, rootPrefix(classPrefix));
 
     return (

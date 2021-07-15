@@ -143,10 +143,6 @@ combine(...) => boolean
 
 <!--{include:`controlled.md`}-->
 
-### Time Zone
-
-<!--{include:`time-zone.md`}-->
-
 ## Accessibility
 
 Learn more in [Accessibility](/guide/accessibility).
@@ -212,7 +208,6 @@ type DisabledDateFunction = (
 | showOneCalendar      | boolen                                                  | Whether to show only one calendar                                                    |
 | showWeekNumbers      | boolean                                                 | Whether to show week numbers                                                         |
 | size                 | enum: 'lg' &#124; 'md' &#124; 'sm' &#124; 'xs' `('md')` | A picker can have different sizes                                                    |
-| timeZone             | string                                                  | [IANA Time zone name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)  |
 | toggleAs             | ElementType `('a')`                                     | You can use a custom element for this component                                      |
 | value                | ValueType                                               | Value (Controlled)                                                                   |
 

@@ -4,7 +4,6 @@ import {
   addDays,
   endOfWeek,
   format,
-  isAfter,
   isSameDay,
   parseISO,
   startOfWeek,
@@ -13,8 +12,6 @@ import {
 import { getDOMNode, getInstance } from '@test/testUtils';
 
 import DateRangePicker from '../DateRangePicker';
-import { zonedDate } from '../../utils/timeZone';
-import { setTimingMargin } from '../utils';
 
 describe('DateRangePicker', () => {
   it('Should render a div with "rs-picker-daterange" class', () => {
@@ -26,7 +23,6 @@ describe('DateRangePicker', () => {
 
   it('Should be disabled', () => {
     const instance = getDOMNode(<DateRangePicker disabled />);
-
     assert.ok(instance.className.match(/\bdisabled\b/));
   });
 
@@ -228,54 +224,5 @@ describe('DateRangePicker', () => {
     );
 
     assert.equal(menu.querySelectorAll('.rs-picker-daterange-calendar-single').length, 1);
-  });
-
-  it('Should be zoned date', () => {
-    const timeZone = new Date().getTimezoneOffset() === -480 ? 'Europe/London' : 'Asia/Shanghai';
-    const template = 'yyyy-MM-dd HH:mm:ss';
-
-    const instance = getInstance(
-      <DateRangePicker format={template} timeZone={timeZone} defaultOpen oneTap />
-    );
-    const menu = instance.overlay;
-    const toggle = instance.target;
-    const today = menu.querySelector(
-      '.rs-calendar-table-cell-is-today .rs-calendar-table-cell-content'
-    );
-
-    ReactTestUtils.Simulate.mouseEnter(today);
-    ReactTestUtils.Simulate.click(today);
-
-    const ret = toggle.querySelector('.rs-picker-toggle-value').innerHTML;
-    const zonedTodayDate = zonedDate(timeZone);
-
-    assert.equal(
-      ret,
-      `${format(setTimingMargin(zonedTodayDate), template)} ~ ${format(
-        setTimingMargin(zonedTodayDate, 'right'),
-        template
-      )}`
-    );
-  });
-
-  it('Should disable from next day with time zone', function () {
-    const timeZone = 'Europe/London';
-    const template = 'yyyy-MM-dd HH:mm:ss';
-    const tomorrow = addDays(new Date(), 1);
-
-    const instance = getInstance(
-      <DateRangePicker
-        format={template}
-        timeZone={timeZone}
-        defaultOpen
-        disabledDate={date => isAfter(date, tomorrow)}
-      />
-    );
-    const menu = instance.overlay;
-    const firstDisabledCell = menu.querySelector(
-      '.rs-calendar-table-cell-disabled .rs-calendar-table-cell-content'
-    );
-
-    assert.equal(firstDisabledCell.getAttribute('title'), format(tomorrow, 'dd MMM yyyy'));
   });
 });

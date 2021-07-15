@@ -10,7 +10,7 @@ import { RsRefForwardingComponent, WithAsProps } from '../@types/common';
 import { DatePickerLocale } from '../locales';
 import { DATERANGE_DISABLED_TARGET } from '../utils';
 
-type OmitCalendarCoreTypes = 'disabledDate' | 'onSelect' | 'onMouseMove' | 'pageDate';
+type OmitCalendarCoreTypes = 'disabledDate' | 'onSelect' | 'onMouseMove' | 'calendarDate';
 
 export interface PanelProps extends WithAsProps, Omit<CalendarCoreProps, OmitCalendarCoreTypes> {
   calendarDate?: ValueType;
@@ -26,7 +26,6 @@ export interface PanelProps extends WithAsProps, Omit<CalendarCoreProps, OmitCal
   onSelect?: (date: Date, event?: React.SyntheticEvent<any>) => void;
   showOneCalendar?: boolean;
   showWeekNumbers?: boolean;
-  timeZone?: string;
   value?: ValueType;
 }
 
@@ -168,7 +167,7 @@ const Panel: RsRefForwardingComponent<'div', PanelProps> = React.forwardRef(
         onMoveForward={handleMoveForward}
         onToggleMonthDropdown={toggleMonthDropdown}
         onToggleTimeDropdown={toggleTimeDropdown}
-        pageDate={getPageDate()}
+        calendarDate={getPageDate()}
         ref={ref}
       />
     );
@@ -183,7 +182,6 @@ Panel.propTypes = {
   calendarDate: PropTypes.arrayOf(PropTypes.instanceOf(Date)),
   index: PropTypes.number,
   format: PropTypes.string,
-  timeZone: PropTypes.string,
   isoWeek: PropTypes.bool,
   limitEndYear: PropTypes.number,
   classPrefix: PropTypes.string,

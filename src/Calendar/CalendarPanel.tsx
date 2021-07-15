@@ -1,11 +1,12 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import PropTypes from 'prop-types';
 import Calendar, { CalendarState } from './Calendar';
 import { CalendarLocale } from '../locales';
 import Button from '../Button';
 import { FormattedDate } from '../CustomProvider';
-import { composeFunctions, useClassNames, useCustom, TimeZone, DateUtils } from '../utils';
+import { useClassNames, useCustom } from '../utils';
 import { RsRefForwardingComponent, WithAsProps } from '../@types/common';
+import useCalendarDate from './useCalendarDate';
 
 export interface CalendarPanelProps extends WithAsProps {
   /** Controlled value */
@@ -16,9 +17,6 @@ export interface CalendarPanelProps extends WithAsProps {
 
   /** ISO 8601 standard, each calendar week begins on Monday and Sunday on the seventh day  */
   isoWeek?: boolean;
-
-  /** IANA time zone */
-  timeZone?: string;
 
   /** Display a compact calendar   */
   compact?: boolean;
@@ -61,37 +59,13 @@ const CalendarPanel: RsRefForwardingComponent<
     onChange,
     onSelect,
     renderCell,
-    timeZone,
-    value: valueProp,
+    value,
     ...rest
   } = props;
-  const [value, updateValue] = useState<Date>(
-    TimeZone.toTimeZone(valueProp ?? defaultValue, timeZone)
-  );
-  const [pageDate, setPageDate] = useState(
-    TimeZone.toTimeZone(valueProp ?? defaultValue ?? new Date(), timeZone)
-  );
+
+  const { calendarDate, setCalendarDate } = useCalendarDate(value, defaultValue);
   const [showMonth, setShowMonth] = useState<boolean>(false);
   const { locale } = useCustom('Calendar', overrideLocale);
-
-  const prevValueRef = useRef<Date>(value);
-  const prevTimeZoneRef = useRef<string>(timeZone);
-  const setValue = useCallback((nextValue: Date) => {
-    updateValue(prevValue => {
-      prevValueRef.current = prevValue;
-      return nextValue;
-    });
-  }, []);
-
-  useEffect(() => {
-    const nextValue = TimeZone.toTimeZone(
-      valueProp ?? TimeZone.toLocalTimeZone(prevValueRef.current, prevTimeZoneRef.current),
-      timeZone
-    );
-    prevTimeZoneRef.current = timeZone;
-    setValue(nextValue);
-    setPageDate(nextValue ?? TimeZone.zonedDate(timeZone));
-  }, [setValue, timeZone, valueProp]);
 
   const handleToggleMonthDropdown = useCallback(() => {
     setShowMonth(prevShowMonth => !prevShowMonth);
@@ -99,18 +73,10 @@ const CalendarPanel: RsRefForwardingComponent<
 
   const handleChange = useCallback(
     (nextValue: Date) => {
-      setValue(nextValue);
-      setPageDate(
-        composeFunctions(
-          (d: Date) => DateUtils.setHours(d, DateUtils.getHours(pageDate)),
-          (d: Date) => DateUtils.setMinutes(d, DateUtils.getMinutes(pageDate)),
-          (d: Date) => DateUtils.setSeconds(d, DateUtils.getSeconds(pageDate))
-        )(nextValue)
-      );
-
-      onChange?.(TimeZone.toLocalTimeZone(nextValue, timeZone));
+      setCalendarDate(nextValue);
+      onChange?.(nextValue);
     },
-    [onChange, pageDate, setValue, timeZone]
+    [setCalendarDate, onChange]
   );
 
   const handleChangePageDate = useCallback(
@@ -122,17 +88,16 @@ const CalendarPanel: RsRefForwardingComponent<
   );
 
   const handleClickToday = useCallback(() => {
-    const nextValue = TimeZone.zonedDate(timeZone);
     setShowMonth(false);
-    handleChange(nextValue);
-  }, [handleChange, timeZone]);
+    handleChange(new Date());
+  }, [handleChange]);
 
   const handleSelect = useCallback(
     (nextValue: Date) => {
-      onSelect?.(TimeZone.toLocalTimeZone(nextValue, timeZone));
+      onSelect?.(nextValue);
       handleChange(nextValue);
     },
-    [handleChange, onSelect, timeZone]
+    [handleChange, onSelect]
   );
 
   const { prefix, merge, withClassPrefix } = useClassNames(classPrefix);
@@ -146,10 +111,7 @@ const CalendarPanel: RsRefForwardingComponent<
     [handleClickToday, locale.today, prefix]
   );
 
-  const customRenderCell = useCallback(
-    (date: Date) => renderCell?.(TimeZone.toLocalTimeZone(date, timeZone)),
-    [renderCell, timeZone]
-  );
+  const customRenderCell = useCallback((date: Date) => renderCell?.(date), [renderCell]);
 
   const classes = merge(className, withClassPrefix('panel', { bordered, compact }));
 
@@ -162,8 +124,7 @@ const CalendarPanel: RsRefForwardingComponent<
       isoWeek={isoWeek}
       format="yyyy-MM-dd"
       calendarState={showMonth ? CalendarState.DROP_MONTH : null}
-      pageDate={pageDate}
-      timeZone={timeZone}
+      calendarDate={calendarDate}
       limitEndYear={1000}
       locale={locale}
       renderTitle={date => (
@@ -185,7 +146,6 @@ CalendarPanel.propTypes = {
   value: PropTypes.instanceOf(Date),
   defaultValue: PropTypes.instanceOf(Date),
   isoWeek: PropTypes.bool,
-  timeZone: PropTypes.string,
   compact: PropTypes.bool,
   bordered: PropTypes.bool,
   locale: PropTypes.object,

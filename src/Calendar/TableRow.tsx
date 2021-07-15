@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import PropTypes from 'prop-types';
 import partial from 'lodash/partial';
-import { DateUtils, TimeZone, useClassNames, DATERANGE_DISABLED_TARGET } from '../utils';
+import { DateUtils, useClassNames, DATERANGE_DISABLED_TARGET } from '../utils';
 import { useCalendarContext } from './CalendarContext';
 import { RsRefForwardingComponent, WithAsProps } from '../@types/common';
 
@@ -29,8 +29,7 @@ const TableRow: RsRefForwardingComponent<'div', TableRowProps> = React.forwardRe
       onSelect,
       renderCell,
       locale,
-      showWeekNumbers,
-      timeZone
+      showWeekNumbers
     } = useCalendarContext();
     const { prefix, merge } = useClassNames(classPrefix);
 
@@ -51,7 +50,7 @@ const TableRow: RsRefForwardingComponent<'div', TableRowProps> = React.forwardRe
       const [selectedStartDate, selectedEndDate] = dateRange || [];
       const [hoverStartDate, hoverEndDate] = hoverRangeValue || [];
       const isRangeSelectionMode = typeof dateRange !== 'undefined';
-      const todayDate = TimeZone.zonedDate(timeZone);
+      const todayDate = new Date();
 
       for (let i = 0; i < 7; i += 1) {
         const thisDate = DateUtils.addDays(weekendDate, i);

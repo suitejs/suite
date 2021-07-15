@@ -1,8 +1,8 @@
-import React, { ReactNode, useCallback, useEffect, useState } from 'react';
+import React, { ReactNode, useCallback, useState } from 'react';
 import PropTypes from 'prop-types';
 import Button from '../Button';
-import { useClassNames } from '../utils';
-import { RsRefForwardingComponent, WithAsProps, TimeZoneName } from '../@types/common';
+import { useClassNames, useUpdateEffect } from '../utils';
+import { RsRefForwardingComponent, WithAsProps } from '../@types/common';
 import { getDefaultRanges, getRanges } from './utils';
 import { InnerRange, RangeType, ToolbarValue } from './types';
 import { CalendarLocale } from '../locales';
@@ -12,9 +12,8 @@ export type { RangeType } from './types';
 export interface ToolbarProps extends WithAsProps {
   hideOkBtn?: boolean;
   locale?: CalendarLocale;
-  pageDate?: ToolbarValue;
+  calendarDate?: ToolbarValue;
   ranges: RangeType[];
-  timeZone?: TimeZoneName;
   disabledOkBtn?: (value?: ToolbarValue) => boolean;
   disabledShortcut?: (value?: ToolbarValue) => boolean;
   onOk?: (event: React.MouseEvent) => void;
@@ -40,22 +39,21 @@ const Toolbar: RsRefForwardingComponent<'div', ToolbarProps> = React.forwardRef(
       hideOkBtn,
       onOk,
       onClickShortcut,
-      pageDate,
+      calendarDate,
       ranges: rangesProp,
-      timeZone,
       locale,
       ...rest
     } = props;
     const [ranges, setRanges] = useState<InnerRange[]>(getRanges(props));
     const { merge, prefix, withClassPrefix } = useClassNames(classPrefix);
 
-    useEffect(() => {
-      setRanges(getRanges({ ranges: rangesProp, pageDate, timeZone }));
-    }, [pageDate, rangesProp, timeZone]);
+    useUpdateEffect(() => {
+      setRanges(getRanges({ ranges: rangesProp, calendarDate }));
+    }, [calendarDate, rangesProp]);
 
     const hasLocaleKey = useCallback(
-      (key: ReactNode) => getDefaultRanges(timeZone, pageDate).some(item => item.label === key),
-      [pageDate, timeZone]
+      (key: ReactNode) => getDefaultRanges(calendarDate).some(item => item.label === key),
+      [calendarDate]
     );
 
     const renderOkButton = useCallback(() => {
@@ -63,7 +61,7 @@ const Toolbar: RsRefForwardingComponent<'div', ToolbarProps> = React.forwardRef(
         return null;
       }
 
-      const disabled = disabledOkBtn?.(pageDate);
+      const disabled = disabledOkBtn?.(calendarDate);
 
       return (
         <div className={prefix('right')}>
@@ -77,7 +75,7 @@ const Toolbar: RsRefForwardingComponent<'div', ToolbarProps> = React.forwardRef(
           </Button>
         </div>
       );
-    }, [disabledOkBtn, hideOkBtn, locale, onOk, pageDate, prefix]);
+    }, [disabledOkBtn, hideOkBtn, locale, onOk, calendarDate, prefix]);
 
     if (hideOkBtn && ranges.length === 0) {
       return null;
@@ -121,7 +119,7 @@ Toolbar.propTypes = {
   ranges: PropTypes.array,
   className: PropTypes.string,
   classPrefix: PropTypes.string,
-  pageDate: PropTypes.oneOfType([
+  calendarDate: PropTypes.oneOfType([
     PropTypes.instanceOf(Date),
     PropTypes.arrayOf(PropTypes.instanceOf(Date))
   ]),
@@ -129,8 +127,7 @@ Toolbar.propTypes = {
   onOk: PropTypes.func,
   disabledShortcut: PropTypes.func,
   disabledOkBtn: PropTypes.func,
-  hideOkButton: PropTypes.bool,
-  timeZone: PropTypes.string
+  hideOkButton: PropTypes.bool
 };
 Toolbar.defaultProps = defaultProps;
 

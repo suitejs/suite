@@ -1,13 +1,12 @@
 import { useCallback, useState } from 'react';
-import { toTimeZone, zonedDate } from '../utils/timeZone';
 import { ToolbarProps } from './Toolbar';
 import { setTimingMargin } from '../DateRangePicker/utils';
 import { subDays } from '../utils/dateUtils';
-import { InnerRange, RangeType, ToolbarValue } from './types';
+import { InnerRange, RangeType } from './types';
 import { CalendarState } from '../Calendar';
 
-export function getDefaultRanges(timeZone: string, date: Date | Date[]): InnerRange[] {
-  const todayDate = zonedDate(timeZone);
+export function getDefaultRanges(date: Date | Date[]): InnerRange[] {
+  const todayDate = new Date();
 
   /**
    * Is Date[] type
@@ -52,16 +51,13 @@ export function getDefaultRanges(timeZone: string, date: Date | Date[]): InnerRa
   return rangeKeys.map(rangeIterator);
 }
 
-const generateRangesIterator = ({
-  pageDate,
-  timeZone
-}: Pick<ToolbarProps, 'pageDate' | 'timeZone'>) => ({ value, ...rest }: RangeType): InnerRange => {
-  value = typeof value === 'function' ? value(pageDate) : value;
+const generateRangesIterator = ({ calendarDate }: Pick<ToolbarProps, 'calendarDate'>) => ({
+  value,
+  ...rest
+}: RangeType): InnerRange => {
+  value = typeof value === 'function' ? value(calendarDate) : value;
   return {
-    value:
-      value instanceof Array
-        ? (value.map(item => toTimeZone(item, timeZone)) as ToolbarValue)
-        : toTimeZone(value, timeZone),
+    value,
     ...rest
   };
 };
@@ -69,17 +65,15 @@ const generateRangesIterator = ({
 /**
  * get Toolbar ranges from Toolbar props
  * @param ranges
- * @param timeZone
- * @param pageDate
+ * @param calendarDate
  */
 export const getRanges = ({
   ranges,
-  timeZone,
-  pageDate
-}: Pick<ToolbarProps, 'ranges' | 'timeZone' | 'pageDate'>): InnerRange[] => {
+  calendarDate
+}: Pick<ToolbarProps, 'ranges' | 'calendarDate'>): InnerRange[] => {
   return typeof ranges === 'undefined'
-    ? getDefaultRanges(timeZone, pageDate)
-    : ranges.map(generateRangesIterator({ pageDate, timeZone }));
+    ? getDefaultRanges(calendarDate)
+    : ranges.map(generateRangesIterator({ calendarDate }));
 };
 
 export const useCalendarState = () => {

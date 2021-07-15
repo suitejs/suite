@@ -1,9 +1,9 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import ReactTestUtils from 'react-dom/test-utils';
 import { format, isSameDay, parseISO } from '../../utils/dateUtils';
-import { getDOMNode, getInstance } from '@test/testUtils';
+import { getDOMNode, getInstance, createTestContainer } from '@test/testUtils';
 import DatePicker from '../DatePicker';
-import { toTimeZone } from '../../utils/timeZone';
 
 describe('DatePicker ', () => {
   it('Should render a div with "rs-picker-date" class', () => {
@@ -299,19 +299,6 @@ describe('DatePicker ', () => {
     assert.equal(picker.querySelector('.rs-calendar-time-dropdown-column li').innerText, '12');
   });
 
-  it('Should be zoned date', () => {
-    const timeZone = new Date().getTimezoneOffset() === -480 ? 'Europe/London' : 'Asia/Shanghai';
-    const template = 'yyyy-MM-dd HH:mm:ss';
-    const date = new Date(2020, 5, 30, 23, 30, 0);
-
-    const instance = getDOMNode(
-      <DatePicker format={template} timeZone={timeZone} value={date} defaultOpen />
-    );
-    const ret = instance.querySelector('.rs-picker-toggle-value').innerHTML;
-
-    assert.equal(ret, format(toTimeZone(date, timeZone), template));
-  });
-
   it('Should show dates that are not in the same month', () => {
     const instance = getInstance(<DatePicker value={new Date('6/10/2021')} open />);
     const picker = instance.overlay;
@@ -320,5 +307,38 @@ describe('DatePicker ', () => {
     assert.equal(days[0].innerText, '30');
     assert.equal(days[1].innerText, '31');
     assert.equal(days[2].innerText, '1');
+  });
+
+  it('Should be a controlled value', done => {
+    const instanceRef = React.createRef();
+    const container = createTestContainer();
+    const App = React.forwardRef((props, ref) => {
+      const [value, setValue] = React.useState(new Date('6/10/2021'));
+      const pickerRef = React.useRef();
+      React.useImperativeHandle(ref, () => ({
+        picker: pickerRef.current,
+        setDate: date => {
+          setValue(date);
+        }
+      }));
+      return <DatePicker value={value} open ref={pickerRef} format="yyyy-MM-dd" />;
+    });
+
+    ReactDOM.render(<App ref={instanceRef} />, container);
+    instanceRef.current.setDate(new Date('7/11/2021'));
+
+    assert.equal(
+      instanceRef.current.picker.root.querySelector('.rs-picker-toggle-value').innerText,
+      '2021-07-11'
+    );
+
+    setTimeout(() => {
+      if (
+        instanceRef.current.picker.overlay.querySelector('.rs-calendar-header-title').innerText ===
+        '11 Jul 2021'
+      ) {
+        done();
+      }
+    }, 100);
   });
 });

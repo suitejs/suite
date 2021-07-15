@@ -6,6 +6,7 @@ import omit from 'lodash/omit';
 import IconCalendar from '@rsuite/icons/legacy/Calendar';
 import IconClockO from '@rsuite/icons/legacy/ClockO';
 import { Calendar, CalendarState } from '../Calendar';
+import useCalendarDate from '../Calendar/useCalendarDate';
 import Toolbar, { RangeType } from './Toolbar';
 import { DatePickerLocale } from '../locales';
 import {
@@ -13,7 +14,6 @@ import {
   createChainedFunction,
   DateUtils,
   mergeRefs,
-  TimeZone,
   useClassNames,
   useControlled,
   useCustom
@@ -34,12 +34,7 @@ import {
   useToggleKeyDownEvent
 } from '../Picker';
 
-import {
-  FormControlBaseProps,
-  PickerBaseProps,
-  RsRefForwardingComponent,
-  TimeZoneName
-} from '../@types/common';
+import { FormControlBaseProps, PickerBaseProps, RsRefForwardingComponent } from '../@types/common';
 
 import { useCalendarState } from './utils';
 
@@ -56,9 +51,6 @@ export interface DatePickerProps
 
   /** Format date */
   format?: string;
-
-  /** IANA Time zone */
-  timeZone?: TimeZoneName;
 
   /** Display date panel when component initial */
   inline?: boolean;
@@ -162,7 +154,6 @@ const DatePicker: RsRefForwardingComponent<'div', DatePickerProps> = React.forwa
       showMeridian,
       showWeekNumbers,
       style,
-      timeZone,
       toggleAs,
       disabledDate: disabledDateProp,
       renderValue,
@@ -188,17 +179,9 @@ const DatePicker: RsRefForwardingComponent<'div', DatePickerProps> = React.forwa
     );
     const { merge, prefix, withClassPrefix } = useClassNames(classPrefix);
 
-    // Format the value according to the time zone.
-    const formatValue = useCallback(v => TimeZone.toTimeZone(v, timeZone), [timeZone]);
-
-    const [value, setValue] = useControlled<Date>(valueProp, defaultValue, formatValue);
-
-    const [pageDate, setPageDate] = useState(
-      TimeZone.toTimeZone(value ?? calendarDefaultDate ?? new Date(), timeZone)
-    );
-
+    const [value, setValue] = useControlled<Date>(valueProp, defaultValue);
+    const { calendarDate, setCalendarDate } = useCalendarDate(valueProp, calendarDefaultDate);
     const [inputState, setInputState] = useState<InputState>();
-
     const { calendarState, reset, openMonth, openTime } = useCalendarState();
     const [active, setActive] = useState<boolean>(false);
     const triggerRef = useRef<OverlayTriggerInstance>();
@@ -208,23 +191,17 @@ const DatePicker: RsRefForwardingComponent<'div', DatePickerProps> = React.forwa
 
     usePublicMethods(ref, { rootRef, triggerRef, overlayRef, targetRef });
 
-    const getLocalPageDate = useCallback(
-      (date = pageDate) => TimeZone.toLocalTimeZone(date, timeZone),
-      [pageDate, timeZone]
-    );
-
     /**
      * Switch to the callback triggered after the next month.
      */
     const handleMoveForward = useCallback(
       (nextPageDate: Date) => {
-        setPageDate(nextPageDate);
+        setCalendarDate(nextPageDate);
 
-        nextPageDate = getLocalPageDate(nextPageDate);
         onNextMonth?.(nextPageDate);
         onChangeCalendarDate?.(nextPageDate);
       },
-      [getLocalPageDate, onChangeCalendarDate, onNextMonth]
+      [onChangeCalendarDate, onNextMonth, setCalendarDate]
     );
 
     /**
@@ -232,13 +209,12 @@ const DatePicker: RsRefForwardingComponent<'div', DatePickerProps> = React.forwa
      */
     const handleMoveBackward = useCallback(
       (nextPageDate: Date) => {
-        setPageDate(nextPageDate);
+        setCalendarDate(nextPageDate);
 
-        nextPageDate = getLocalPageDate(nextPageDate);
         onPrevMonth?.(nextPageDate);
         onChangeCalendarDate?.(nextPageDate);
       },
-      [getLocalPageDate, onChangeCalendarDate, onPrevMonth]
+      [onChangeCalendarDate, onPrevMonth, setCalendarDate]
     );
 
     /**
@@ -246,11 +222,10 @@ const DatePicker: RsRefForwardingComponent<'div', DatePickerProps> = React.forwa
      */
     const handleDateChange = useCallback(
       (nextValue: Date, event?: React.SyntheticEvent<any>) => {
-        nextValue = TimeZone.toLocalTimeZone(nextValue, timeZone);
         onSelect?.(nextValue, event);
         onChangeCalendarDate?.(nextValue, event);
       },
-      [onChangeCalendarDate, onSelect, timeZone]
+      [onChangeCalendarDate, onSelect]
     );
 
     /**
@@ -258,11 +233,11 @@ const DatePicker: RsRefForwardingComponent<'div', DatePickerProps> = React.forwa
      */
     const handleChangePageDate = useCallback(
       (nextPageDate: Date) => {
-        setPageDate(nextPageDate);
+        setCalendarDate(nextPageDate);
         reset();
         handleDateChange(nextPageDate);
       },
-      [handleDateChange, reset]
+      [handleDateChange, reset, setCalendarDate]
     );
 
     /**
@@ -270,10 +245,10 @@ const DatePicker: RsRefForwardingComponent<'div', DatePickerProps> = React.forwa
      */
     const handleChangePageTime = useCallback(
       (nextPageTime: Date) => {
-        setPageDate(nextPageTime);
+        setCalendarDate(nextPageTime);
         handleDateChange(nextPageTime);
       },
-      [handleDateChange]
+      [handleDateChange, setCalendarDate]
     );
 
     const handleClose = useCallback(() => {
@@ -284,21 +259,21 @@ const DatePicker: RsRefForwardingComponent<'div', DatePickerProps> = React.forwa
      * The callback triggered when PM/AM is switched.
      */
     const handleToggleMeridian = useCallback(() => {
-      const hours = DateUtils.getHours(pageDate);
+      const hours = DateUtils.getHours(calendarDate);
       const nextHours = hours >= 12 ? hours - 12 : hours + 12;
-      const nextDate = DateUtils.setHours(pageDate, nextHours);
-      setPageDate(nextDate);
-    }, [pageDate]);
+      const nextDate = DateUtils.setHours(calendarDate, nextHours);
+      setCalendarDate(nextDate);
+    }, [calendarDate, setCalendarDate]);
 
     const updateValue = useCallback(
       (event: React.SyntheticEvent<any>, nextPageDate?: Date | null, closeOverlay = true) => {
-        const nextValue: Date = typeof nextPageDate !== 'undefined' ? nextPageDate : pageDate;
+        const nextValue: Date = typeof nextPageDate !== 'undefined' ? nextPageDate : calendarDate;
 
-        setPageDate(nextValue || new Date());
+        setCalendarDate(nextValue || new Date());
         setValue(nextValue);
 
         if (nextValue !== value || !DateUtils.isSameDay(nextValue, value)) {
-          onChange?.(getLocalPageDate(nextValue), event);
+          onChange?.(nextValue, event);
         }
 
         // `closeOverlay` default value is `true`
@@ -306,7 +281,7 @@ const DatePicker: RsRefForwardingComponent<'div', DatePickerProps> = React.forwa
           handleClose();
         }
       },
-      [getLocalPageDate, handleClose, onChange, pageDate, setValue, value]
+      [handleClose, onChange, calendarDate, setCalendarDate, setValue, value]
     );
 
     /**
@@ -326,9 +301,9 @@ const DatePicker: RsRefForwardingComponent<'div', DatePickerProps> = React.forwa
     const handleOK = useCallback(
       (event: React.SyntheticEvent<any>) => {
         updateValue(event);
-        onOk?.(getLocalPageDate(), event);
+        onOk?.(calendarDate, event);
       },
-      [getLocalPageDate, updateValue, onOk]
+      [updateValue, onOk, calendarDate]
     );
 
     /**
@@ -362,10 +337,10 @@ const DatePicker: RsRefForwardingComponent<'div', DatePickerProps> = React.forwa
      */
     const handleClean = useCallback(
       (event: React.SyntheticEvent) => {
-        setPageDate(TimeZone.toTimeZone(new Date(), timeZone));
+        setCalendarDate(new Date());
         updateValue(event, null);
       },
-      [updateValue, timeZone]
+      [setCalendarDate, updateValue]
     );
 
     /**
@@ -384,14 +359,14 @@ const DatePicker: RsRefForwardingComponent<'div', DatePickerProps> = React.forwa
      */
     const handleSelect = useCallback(
       (nextValue: Date, event: React.SyntheticEvent, updatableValue = true) => {
-        setPageDate(
-          // Determine whether the current value contains time, if not, use pageDate.
+        setCalendarDate(
+          // Determine whether the current value contains time, if not, use calendarDate.
           DateUtils.shouldTime(formatStr)
             ? nextValue
             : composeFunctions(
-                (d: Date) => DateUtils.setHours(d, DateUtils.getHours(pageDate)),
-                (d: Date) => DateUtils.setMinutes(d, DateUtils.getMinutes(pageDate)),
-                (d: Date) => DateUtils.setSeconds(d, DateUtils.getSeconds(pageDate))
+                (d: Date) => DateUtils.setHours(d, DateUtils.getHours(calendarDate)),
+                (d: Date) => DateUtils.setMinutes(d, DateUtils.getMinutes(calendarDate)),
+                (d: Date) => DateUtils.setSeconds(d, DateUtils.getSeconds(calendarDate))
               )(nextValue)
         );
 
@@ -400,13 +375,10 @@ const DatePicker: RsRefForwardingComponent<'div', DatePickerProps> = React.forwa
           updateValue(event, nextValue);
         }
       },
-      [formatStr, handleDateChange, oneTap, pageDate, updateValue]
+      [formatStr, handleDateChange, oneTap, calendarDate, setCalendarDate, updateValue]
     );
 
-    const disabledDate = useCallback(
-      (date?: Date) => disabledDateProp?.(TimeZone.toLocalTimeZone(date, timeZone)),
-      [disabledDateProp, timeZone]
-    );
+    const disabledDate = useCallback((date?: Date) => disabledDateProp?.(date), [disabledDateProp]);
 
     /**
      * Callback after the input box value is changed.
@@ -451,11 +423,11 @@ const DatePicker: RsRefForwardingComponent<'div', DatePickerProps> = React.forwa
     const handleInputBlur = useCallback(
       event => {
         if (inputState === 'Typing') {
-          updateValue(event, pageDate);
+          updateValue(event, calendarDate);
         }
         setInputState('Initial');
       },
-      [inputState, pageDate, updateValue]
+      [inputState, calendarDate, updateValue]
     );
 
     const handleEntered = useCallback(() => {
@@ -472,13 +444,12 @@ const DatePicker: RsRefForwardingComponent<'div', DatePickerProps> = React.forwa
     // Check whether the time is within the time range of the shortcut option in the toolbar.
     const disabledToolbarHandle = useCallback(
       (date?: Date): boolean => {
-        const localTimeZoneDate = TimeZone.toLocalTimeZone(date, timeZone);
-        const allowDate = disabledDateProp?.(localTimeZoneDate) ?? false;
-        const allowTime = DateUtils.disabledTime(props, localTimeZoneDate);
+        const allowDate = disabledDateProp?.(date) ?? false;
+        const allowTime = DateUtils.disabledTime(props, date);
 
         return allowDate || allowTime;
       },
-      [disabledDateProp, props, timeZone]
+      [disabledDateProp, props]
     );
 
     const calendarProps = useMemo(
@@ -489,13 +460,13 @@ const DatePicker: RsRefForwardingComponent<'div', DatePickerProps> = React.forwa
             DateUtils.calendarOnlyProps
           ),
           disabledOrHiddenTimeFunc => (next: number, date: Date): boolean =>
-            disabledOrHiddenTimeFunc(next, TimeZone.toLocalTimeZone(date, timeZone))
+            disabledOrHiddenTimeFunc(next, date)
         ),
-      [props, timeZone]
+      [props]
     );
 
-    const inSameMonth = useCallback((date: Date) => DateUtils.isSameMonth(date, pageDate), [
-      pageDate
+    const inSameMonth = useCallback((date: Date) => DateUtils.isSameMonth(date, calendarDate), [
+      calendarDate
     ]);
 
     const calendar = (
@@ -507,11 +478,10 @@ const DatePicker: RsRefForwardingComponent<'div', DatePickerProps> = React.forwa
         disabledDate={disabledDate}
         limitEndYear={limitEndYear}
         format={formatStr}
-        timeZone={timeZone}
         isoWeek={isoWeek}
         inSameMonth={inSameMonth}
         calendarState={calendarState}
-        pageDate={pageDate}
+        calendarDate={calendarDate}
         onMoveForward={handleMoveForward}
         onMoveBackward={handleMoveBackward}
         onSelect={handleSelect}
@@ -537,9 +507,8 @@ const DatePicker: RsRefForwardingComponent<'div', DatePickerProps> = React.forwa
           {calendar}
           <Toolbar
             locale={locale}
-            timeZone={timeZone}
             ranges={ranges}
-            pageDate={pageDate}
+            calendarDate={calendarDate}
             disabledOkBtn={disabledToolbarHandle}
             disabledShortcut={disabledToolbarHandle}
             onClickShortcut={handleShortcutPageDate}
@@ -654,7 +623,6 @@ DatePicker.propTypes = {
   ranges: PropTypes.array,
   showMeridian: PropTypes.bool,
   showWeekNumbers: PropTypes.bool,
-  timeZone: PropTypes.string,
   value: PropTypes.instanceOf(Date)
 };
 

@@ -1,31 +1,10 @@
-import { toLocalTimeZone, toTimeZone, zonedDate } from '../utils/timeZone';
 import { RangeType, ValueType } from './types';
-import { TimeZone, DateUtils } from '../utils';
+import { DateUtils } from '../utils';
 
 export const setTimingMargin = (date, way = 'left'): Date =>
   way === 'right' ? DateUtils.endOfDay(date) : DateUtils.startOfDay(date);
 
-export const toLocalValue = (value: ValueType, timeZone: string): ValueType => {
-  if (typeof value === 'undefined') {
-    return value;
-  }
-  return (value ?? []).map(item => toLocalTimeZone(item, timeZone)) as ValueType;
-};
-
-export const toZonedValue = (value: ValueType, timeZone: string): ValueType => {
-  if (typeof value === 'undefined') {
-    return value;
-  }
-  return (value ?? []).map(item => toTimeZone(item, timeZone)) as ValueType;
-};
-
-export function getCalendarDate({
-  value,
-  timeZone
-}: {
-  value?: ValueType;
-  timeZone: string | undefined;
-}): ValueType {
+export function getCalendarDate({ value }: { value?: ValueType }): ValueType {
   // Update calendarDate if the value is not null
   value = value ?? [];
   if (value[0] && value[1]) {
@@ -33,12 +12,12 @@ export function getCalendarDate({
     return [value[0], sameMonth ? DateUtils.addMonths(value[1], 1) : value[1]];
   }
 
-  const todayDate = zonedDate(timeZone);
+  const todayDate = new Date();
   return [todayDate, DateUtils.addMonths(todayDate, 1)];
 }
 
-export const getDefaultRanges = (timeZone: string): RangeType[] => {
-  const todayDate = TimeZone.zonedDate(timeZone);
+export const getDefaultRanges = (): RangeType[] => {
+  const todayDate = new Date();
   return [
     {
       label: 'today',
